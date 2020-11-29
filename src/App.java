@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
-import analyser.Analyser;
+//import analyser.Analyser;
 import error.CompileError;
 import instruction.Instruction;
 import tokenizer.StringIter;
@@ -18,8 +18,8 @@ import tokenizer.Tokenizer;
 
 
 public class App {
-    public static void main(String[] args) throws CompileError {
-        var input = args[0];
+    public static void main(String[] args) throws CompileError, FileNotFoundException {
+        File input = new File(args[0]);
         Scanner scanner;
         scanner = new Scanner(input);
         var iter = new StringIter(scanner);

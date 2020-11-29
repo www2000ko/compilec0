@@ -35,9 +35,78 @@ public enum TokenType {
     ARROW   , //-> '->'
     COMMA   , //-> ','
     COLON   , //-> ':'
-    SEMICOLO, //-> ';'
+    SEMICOLON, //-> ';'
     /** 文件尾 */
     EOF;
 
 
+    @Override
+    public String toString() {
+        switch (this) {
+            case None:
+                return "NullToken";
+            case FN_KW:
+                return "FN_KW";
+            case CONST_KW:
+                return "CONST_KW";
+            case AS_KW:
+                return "AS_KW";
+            case WHILE_KW:
+                return "WHILE_KW";
+            case IF_KW:
+                return "IF_KW";
+            case ELSE_KW:
+                return "ELSE_KW";
+            case RETURN_KW:
+                return "RETURN_KW";
+            case UINT_LITERAL:
+                return "UINT_LITERAL";
+            case STRING_LITERAL:
+                return "STRING_LITERAL";
+            case IDENT:
+                return "IDENT";
+            case PLUS:
+                return "PLUS";
+            case MINUS:
+                return "MINUS";
+            case MUL:
+                return "MUL";
+            case DIV:
+                return "DIV";
+            case ASSIGN:
+                return "ASSIGN";
+            case EQ:
+                return "EQ";
+            case NEQ:
+                return "NEQ";
+            case LT:
+                return "LT";
+            case GT:
+                return "GT";
+            case LE:
+                return "LE";
+            case GE:
+                return "GE";
+            case L_PAREN:
+                return "L_PAREN";
+            case R_PAREN:
+                return "R_PAREN";
+            case L_BRACE:
+                return "L_BRACE";
+            case R_BRACE:
+                return "R_BRACE";
+            case ARROW:
+                return "ARROW";
+            case COMMA:
+                return "COMMA";
+            case COLON:
+                return "COLON";
+            case SEMICOLON:
+                return "SEMICOLON";
+            case EOF:
+                return "EOF";
+            default:
+                return "InvalidToken";
+        }
+    }
 }

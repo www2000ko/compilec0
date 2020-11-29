@@ -133,7 +133,14 @@ public class Tokenizer {
             return new Token(TokenType.PLUS, '+', it.previousPos(), it.currentPos());
         }
         else if(ch=='-'){
-            return new Token(TokenType.MINUS, '-', it.previousPos(), it.currentPos());
+            if(it.peekChar()=='>'){
+                ch=it.nextChar();
+                Pos cuPos=it.currentPos();
+                return new Token(TokenType.ARROW, "->", prePos, cuPos);
+            }
+            else{
+                return new Token(TokenType.MINUS, '-', it.previousPos(), it.currentPos());
+            }
         }
         else if(ch=='*'){
             return new Token(TokenType.MUL, '*', it.previousPos(), it.currentPos());
@@ -188,11 +195,6 @@ public class Tokenizer {
         else if(ch=='}'){
             return new Token(TokenType.R_BRACE, '}', it.previousPos(), it.currentPos());
         }
-        else if(ch=='-'&&it.peekChar()=='>'){
-            ch=it.nextChar();
-            Pos cuPos=it.currentPos();
-            return new Token(TokenType.ARROW, "->", prePos, cuPos);
-        }
         else if(ch==','){
             return new Token(TokenType.COMMA, ',', it.previousPos(), it.currentPos());
         }
@@ -200,7 +202,10 @@ public class Tokenizer {
             return new Token(TokenType.COLON, ':', it.previousPos(), it.currentPos());
         }
         else if(ch==';'){
-            return new Token(TokenType.COLON, ';', it.previousPos(), it.currentPos());
+            return new Token(TokenType.SEMICOLON, ';', it.previousPos(), it.currentPos());
+        }
+        else{
+            throw new TokenizeError(ErrorCode.InvalidInput, it.previousPos());
         }
 //        switch (it.nextChar()) {
 //            case '+':
