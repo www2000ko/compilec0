@@ -17,6 +17,9 @@ public enum TokenType {
 
     IDENT,
 
+    INT,
+    VOID,
+
     PLUS    ,// -> '+'
     MINUS   , //-> '-'
     MUL     , //-> '*'
@@ -105,6 +108,10 @@ public enum TokenType {
                 return "SEMICOLON";
             case EOF:
                 return "EOF";
+            case INT:
+                return "INT";
+            case VOID:
+                return "VOID";
             default:
                 return "InvalidToken";
         }

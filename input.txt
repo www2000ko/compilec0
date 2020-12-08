@@ -1,7 +1,12 @@
-fn foo(i: int) -> int {
-    return -i;
-}
+let j: int = -(1+1)/2*3+foo(1,2,3+1)/IT as int;
 
 fn main() -> void {
     putint(foo(-123456));
 }
+fn foo(i: int) -> int {
+    return -i;
+}
+
+let i: int;
+let j: int = ;
+const k: int = 1;

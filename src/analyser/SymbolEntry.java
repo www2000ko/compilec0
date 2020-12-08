@@ -4,16 +4,23 @@ public class SymbolEntry {
     boolean isConstant;
     boolean isInitialized;
     int stackOffset;
-
+    SymbolKind kind;
+    IdentType type;
+    Object value;
+    Object param;
     /**
      * @param isConstant
      * @param isDeclared
      * @param stackOffset
      */
-    public SymbolEntry(boolean isConstant, boolean isDeclared, int stackOffset) {
+    public SymbolEntry(boolean isConstant, boolean isDeclared, int stackOffset, SymbolKind kind, IdentType Type, Object value,Object param) {
         this.isConstant = isConstant;
         this.isInitialized = isDeclared;
         this.stackOffset = stackOffset;
+        this.kind = kind;
+        this.type = type;
+        this.value = value;
+        this.param = param;
     }
 
     /**
