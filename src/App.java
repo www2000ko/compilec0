@@ -1,9 +1,4 @@
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.io.PrintStream;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -19,8 +14,9 @@ import tokenizer.Tokenizer;
 
 
 public class App {
-    public static void main(String[] args) throws CompileError, FileNotFoundException {
+    public static void main(String[] args) throws CompileError, IOException {
         File input = new File(args[1]);
+        DataOutputStream dos = new DataOutputStream(new FileOutputStream(args[2]));
         Scanner scanner;
         scanner = new Scanner(input);
         var iter = new StringIter(scanner);
@@ -48,6 +44,7 @@ public class App {
             List<Instruction> instructions;
             analyzer.analyse();
         }
+        int magic=0x72303b3e;
 
     }
     private static Tokenizer tokenize(StringIter iter) {
