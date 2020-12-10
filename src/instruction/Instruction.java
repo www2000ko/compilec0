@@ -1,10 +1,11 @@
 package instruction;
 
+import java.nio.ByteBuffer;
 import java.util.Objects;
 
 public class Instruction {
     private Operation opt;
-    Integer x;
+    long x;
 
     public Instruction(Operation opt) {
         this.opt = opt;
@@ -44,7 +45,7 @@ public class Instruction {
         this.opt = opt;
     }
 
-    public Integer getX() {
+    public long getX() {
         return x;
     }
 
@@ -53,8 +54,8 @@ public class Instruction {
     }
 //    nop,pop,stroe8,load8,addi, subi,muli,divi,ret,cmpi,
 //    push,globa,loca, arga,br,brfalse,brtrue, call,
-    @Override
-    public String toString() {
+    public byte[] toByte() {
+
         switch (this.opt) {
             case nop:
             case pop:
@@ -67,8 +68,15 @@ public class Instruction {
             case ret:
             case cmpi:
             case dup:
-                return String.format("%s", this.opt);
+
+                byte[] bytes=new byte[1];
+                bytes[0]=this.opt.toByte();
+                return bytes;
             case push:
+                ByteBuffer byteBuffer=ByteBuffer.allocate(9);
+                byteBuffer.put((byte) 0x01);
+                byteBuffer.putLong(x);
+                return byteBuffer.array();
             case globa:
             case loca:
             case br:
@@ -76,9 +84,12 @@ public class Instruction {
             case call:
             case brtrue:
             case brfalse:
-                return String.format("%s %s", this.opt, this.x);
+                byteBuffer = ByteBuffer.allocate(5);
+                byteBuffer.put(this.opt.toByte());
+                byteBuffer.putInt((int)x);
+                return byteBuffer.array();
             default:
-                return "panic";
+                return new byte[]{(byte)0xfe};
         }
     }
 }

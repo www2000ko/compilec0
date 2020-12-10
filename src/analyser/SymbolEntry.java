@@ -13,6 +13,7 @@ public class SymbolEntry {
     SymbolTable param;
     ArrayList<Instruction> instruction;
     String name;
+    SymbolTable loc;
     public SymbolEntry(){
         this.name =null;
         this.isInitialized = false;
@@ -22,8 +23,9 @@ public class SymbolEntry {
         this.value = null;
         this.param = null;
         this.instruction = null;
+        this.loc =null;
     }
-    public SymbolEntry(String name,boolean isDeclared, int stackOffset, SymbolKind kind, IdentType type, Object value, SymbolTable param, ArrayList<Instruction>  instruction) {
+    public SymbolEntry(String name,boolean isDeclared, int stackOffset, SymbolKind kind, IdentType type, Object value, SymbolTable param, ArrayList<Instruction>  instruction,SymbolTable loc) {
         this.name =name;
         this.isInitialized = isDeclared;
         this.stackOffset = stackOffset;
@@ -32,6 +34,18 @@ public class SymbolEntry {
         this.value = value;
         this.param = param;
         this.instruction = instruction;
+        this.loc = loc;
+    }
+    public SymbolEntry(String name,boolean isDeclared, int stackOffset, SymbolKind kind, IdentType type, Object value) {
+        this.name =name;
+        this.isInitialized = isDeclared;
+        this.stackOffset = stackOffset;
+        this.kind = kind;
+        this.type = type;
+        this.value = value;
+        this.param = null;
+        this.instruction = null;
+        this.loc = null;
     }
     public boolean isConstant(){
         if(this.kind ==SymbolKind.CONST){
@@ -112,5 +126,13 @@ public class SymbolEntry {
 
     public String getName() {
         return name;
+    }
+
+    public SymbolTable getLoc() {
+        return loc;
+    }
+
+    public void setLoc(SymbolTable loc) {
+        this.loc = loc;
     }
 }

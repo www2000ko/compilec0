@@ -6,6 +6,7 @@ import java.util.Scanner;
 //import analyser.Analyser;
 import analyser.Analyser;
 import error.CompileError;
+import generator.Generator;
 import instruction.Instruction;
 import tokenizer.StringIter;
 import tokenizer.Token;
@@ -44,8 +45,12 @@ public class App {
             List<Instruction> instructions;
             analyzer.analyse();
         }
-        int magic=0x72303b3e;
-
+        else if(args[0].equals("--generate")){
+            var analyzer = new Analyser(tokenizer);
+            analyzer.analyse();
+            var generator=new Generator(dos,analyzer);
+            generator.generateo0();
+        }
     }
     private static Tokenizer tokenize(StringIter iter) {
         var tokenizer = new Tokenizer(iter);

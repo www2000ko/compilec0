@@ -7,10 +7,11 @@ import util.Pos;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 public class SymbolTable {
     /** 符号表 */
-    private HashMap<String, SymbolEntry> symbolTable = new HashMap<>();
+    private LinkedHashMap<String, SymbolEntry> symbolTable = new LinkedHashMap<>();
     private SymbolTable lastTable=null;
     /** 下一个变量的栈偏移 */
     private int nextOffset = 0;
@@ -30,13 +31,14 @@ public class SymbolTable {
      * @param curPos        当前 token 的位置（报错用）
      * @throws AnalyzeError 如果重复定义了则抛异常
      */
-    public void addSymbol(String name, boolean isDeclared, int stackOffset, SymbolKind kind, IdentType type, Object value, SymbolTable param, ArrayList<Instruction> instruction, Pos curPos) throws AnalyzeError {
+    public void addSymbol(String name, boolean isDeclared, int stackOffset, SymbolKind kind, IdentType type, Object value, SymbolTable param, ArrayList<Instruction> instruction, SymbolTable loc,Pos curPos) throws AnalyzeError {
         if (this.symbolTable.get(name) != null) {
             throw new AnalyzeError(ErrorCode.DuplicateDeclaration, curPos);
         } else {
-            this.symbolTable.put(name, new SymbolEntry(name,isDeclared, stackOffset, kind, type, value, param, instruction));
+            this.symbolTable.put(name, new SymbolEntry(name,isDeclared, stackOffset, kind, type, value, param, instruction,loc));
         }
     }
+
     public void addSymbol(SymbolEntry symbol, Pos curPos) throws AnalyzeError {
         if (this.symbolTable.get(symbol.getName()) != null) {
             throw new AnalyzeError(ErrorCode.DuplicateDeclaration, curPos);
@@ -67,5 +69,40 @@ public class SymbolTable {
 
     public void setLastTable(SymbolTable lastTable) {
         this.lastTable = lastTable;
+    }
+
+    public boolean isStart(){
+        if(this.lastTable==null){
+            return true;
+        }
+        else{
+            return false;
+        }
+    }
+
+    public SymbolEntry getsymbol(Object name,Pos curPos) throws AnalyzeError {
+        var entry = this.symbolTable.get(name);
+        if (entry == null) {
+            throw new AnalyzeError(ErrorCode.NotDeclared, curPos);
+        } else {
+            return entry;
+        }
+    }
+
+    public int getCount(){
+        return symbolTable.size();
+    }
+
+    public int getOffset(String name, Pos curPos) throws AnalyzeError {
+        var entry = this.symbolTable.get(name);
+        if (entry == null) {
+            throw new AnalyzeError(ErrorCode.NotDeclared, curPos);
+        } else {
+            return entry.getStackOffset();
+        }
+    }
+
+    public LinkedHashMap<String, SymbolEntry> getSymbolTable() {
+        return symbolTable;
     }
 }
