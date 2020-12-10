@@ -10,24 +10,22 @@ public final class Analyser {
 
     Tokenizer tokenizer;
     ArrayList<Instruction> instructions;
-
+    SymbolTable fnTable=new SymbolTable();
+    SymbolTable varTable=new SymbolTable();
+    SymbolEntry _start;
+    SymbolEntry cusymbol=new SymbolEntry();
     /** 当前偷看的 token */
     Token peekedToken = null;
 
-    /** 符号表 */
-    HashMap<String, SymbolEntry> symbolTable = new HashMap<>();
-
-    /** 下一个变量的栈偏移 */
-    int nextOffset = 0;
-
-    public Analyser(Tokenizer tokenizer) {
+    public Analyser(Tokenizer tokenizer) throws AnalyzeError {
         this.tokenizer = tokenizer;
-        this.instructions = new ArrayList<>();
+        this.instructions=new ArrayList<>();
+        fnTable.addSymbol(null,false,fnTable.getNextVariableOffset(),SymbolKind.FN,
+                null,null,null,this.instructions,null);
     }
 
-    public List<Instruction> analyse() throws CompileError {
+    public void analyse() throws CompileError {
         analyseProgram();
-        return instructions;
     }
 
     /**
@@ -112,81 +110,7 @@ public final class Analyser {
             throw new ExpectedTokenError(tt, token);
         }
     }
-    /**
-     * 获取下一个变量的栈偏移
-     * 
-     * @return
-     */
-    private int getNextVariableOffset() {
-        return this.nextOffset++;
-    }
 
-    /**
-     * 添加一个符号
-     * 
-     * @param name          名字
-     * @param isInitialized 是否已赋值
-     * @param isConstant    是否是常量
-     * @param curPos        当前 token 的位置（报错用）
-     * @throws AnalyzeError 如果重复定义了则抛异常
-     */
-    private void addSymbol(String name, boolean isInitialized, boolean isConstant,SymbolKind kind, IdentType Type, Object value,Object param,Pos curPos) throws AnalyzeError {
-        if (this.symbolTable.get(name) != null) {
-            throw new AnalyzeError(ErrorCode.DuplicateDeclaration, curPos);
-        } else {
-            this.symbolTable.put(name, new SymbolEntry(isConstant, isInitialized, getNextVariableOffset(),kind, Type, value,param));
-        }
-    }
-
-    /**
-     * 设置符号为已赋值
-     * 
-     * @param name   符号名称
-     * @param curPos 当前位置（报错用）
-     * @throws AnalyzeError 如果未定义则抛异常
-     */
-    private void declareSymbol(String name, Pos curPos) throws AnalyzeError {
-        var entry = this.symbolTable.get(name);
-        if (entry == null) {
-            throw new AnalyzeError(ErrorCode.NotDeclared, curPos);
-        } else {
-            entry.setInitialized(true);
-        }
-    }
-
-    /**
-     * 获取变量在栈上的偏移
-     * 
-     * @param name   符号名
-     * @param curPos 当前位置（报错用）
-     * @return 栈偏移
-     * @throws AnalyzeError
-     */
-    private int getOffset(String name, Pos curPos) throws AnalyzeError {
-        var entry = this.symbolTable.get(name);
-        if (entry == null) {
-            throw new AnalyzeError(ErrorCode.NotDeclared, curPos);
-        } else {
-            return entry.getStackOffset();
-        }
-    }
-
-    /**
-     * 获取变量是否是常量
-     * 
-     * @param name   符号名
-     * @param curPos 当前位置（报错用）
-     * @return 是否为常量
-     * @throws AnalyzeError
-     */
-    private boolean isConstant(String name, Pos curPos) throws AnalyzeError {
-        var entry = this.symbolTable.get(name);
-        if (entry == null) {
-            throw new AnalyzeError(ErrorCode.NotDeclared, curPos);
-        } else {
-            return entry.isConstant();
-        }
-    }
 
     /**
      * <程序> ::= 'begin'<主过程>'end'
@@ -217,29 +141,44 @@ public final class Analyser {
     private void analyseLetDeclaration() throws CompileError{
         if(nextIf(TokenType.LET_KW)!=null){
             var nameToken = expect(TokenType.IDENT);
+            SymbolEntry symbol=new SymbolEntry((String)nameToken.getValue(),false,varTable.getNextVariableOffset(),SymbolKind.CONST
+                    ,IdentType.INT,0,null,null);
             expect(TokenType.COLON);
             expect(TokenType.INT);
             boolean isInitialized=false;
             if(check(TokenType.ASSIGN)){
                 expect(TokenType.ASSIGN);
+                int off=symbol.getStackOffset();
+                if(varTable.getLastTable()==null){
+                    instructions.add(new Instruction(Operation.globa,off));
+                }
+                else{
+                    instructions.add(new Instruction(Operation.loca ,off));
+                }
+
                 analyseExpression();
+                instructions.add(new Instruction(Operation.stroe64));
                 isInitialized=true;
             }
             expect(TokenType.SEMICOLON);
-            System.out.println("addSymbol"+(String) nameToken.getValue()+nameToken.getStartPos());
-            //TODO addSymbol((String) nameToken.getValue(),isInitialized,false,nameToken.getStartPos());
+            //System.out.println("addSymbol"+(String) nameToken.getValue()+nameToken.getStartPos());
+
+            varTable.addSymbol(symbol,nameToken.getStartPos());
         }
     }
     private void analyseConstantDeclaration() throws CompileError {
         if (nextIf(TokenType.CONST_KW) != null) {
             var nameToken = expect(TokenType.IDENT);
+
             expect(TokenType.COLON);
             expect(TokenType.INT);
             expect(TokenType.ASSIGN);
             analyseExpression();
             expect(TokenType.SEMICOLON);
-            System.out.println("addSymbol"+(String) nameToken.getValue()+nameToken.getStartPos());
-            //TODO addSymbol((String) nameToken.getValue(),true,true,nameToken.getStartPos());
+            //System.out.println("addSymbol"+(String) nameToken.getValue()+nameToken.getStartPos());
+            SymbolEntry symbol=new SymbolEntry((String)nameToken.getValue(),true,varTable.getNextVariableOffset(),SymbolKind.CONST
+                    ,IdentType.INT,0,null,null);
+            varTable.addSymbol(symbol,nameToken.getStartPos());
         }
     }
 
@@ -308,6 +247,7 @@ public final class Analyser {
                 analyseExpression();
                 expect(TokenType.SEMICOLON);
             }
+            else if(check())
             else if(check(TokenType.LET_KW)||check(TokenType.CONST_KW)){
                 analyseDeclaration();
             }
@@ -348,6 +288,7 @@ public final class Analyser {
             expect(TokenType.ASSIGN);
             analyseC();;
             analyseEP();
+
             //TODO
         }
     }
@@ -392,7 +333,7 @@ public final class Analyser {
         if (nextIf(TokenType.MINUS) != null) {
             negate = true;
             // 计算结果需要被 0 减
-            instructions.add(new Instruction(Operation.LIT, 0));
+            //instructions.add(new Instruction(Operation.LIT, 0));
         } else {
             nextIf(TokenType.PLUS);
             negate = false;
@@ -436,7 +377,7 @@ public final class Analyser {
         }
 
         if (negate) {
-            instructions.add(new Instruction(Operation.SUB));
+            //instructions.add(new Instruction(Operation.SUB));
         }
     }
 

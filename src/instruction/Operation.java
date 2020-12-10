@@ -1,5 +1,6 @@
 package instruction;
 
 public enum Operation {
-    ILL, LIT, LOD, STO, ADD, SUB, MUL, DIV, WRT
+    nop,pop,stroe64,load64,addi, subi,muli,divi,ret,cmpi,dup,
+    push,globa,loca, arga,br,brfalse,brtrue, call,
 }

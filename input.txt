@@ -1,0 +1,2 @@
+let d: int = 1+2;
+let c: int = d;

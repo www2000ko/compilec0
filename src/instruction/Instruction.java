@@ -17,7 +17,7 @@ public class Instruction {
     }
 
     public Instruction() {
-        this.opt = Operation.LIT;
+        this.opt = Operation.nop;
         this.x = 0;
     }
 
@@ -51,23 +51,34 @@ public class Instruction {
     public void setX(Integer x) {
         this.x = x;
     }
-
+//    nop,pop,stroe8,load8,addi, subi,muli,divi,ret,cmpi,
+//    push,globa,loca, arga,br,brfalse,brtrue, call,
     @Override
     public String toString() {
         switch (this.opt) {
-            case ADD:
-            case DIV:
-            case ILL:
-            case MUL:
-            case SUB:
-            case WRT:
+            case nop:
+            case pop:
+            case stroe64:
+            case load64:
+            case addi:
+            case subi:
+            case muli:
+            case divi:
+            case ret:
+            case cmpi:
+            case dup:
                 return String.format("%s", this.opt);
-            case LIT:
-            case LOD:
-            case STO:
+            case push:
+            case globa:
+            case loca:
+            case br:
+            case arga:
+            case call:
+            case brtrue:
+            case brfalse:
                 return String.format("%s %s", this.opt, this.x);
             default:
-                return "ILL";
+                return "panic";
         }
     }
 }
