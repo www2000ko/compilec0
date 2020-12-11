@@ -35,6 +35,9 @@ public class SymbolTable {
         if (this.symbolTable.get(name) != null) {
             throw new AnalyzeError(ErrorCode.DuplicateDeclaration, curPos);
         } else {
+            if(this.lastTable!=null||this.lastTable.symbolTable.get(name) != null){
+                throw new AnalyzeError(ErrorCode.DuplicateDeclaration, curPos);
+            }
             this.symbolTable.put(name, new SymbolEntry(name,isDeclared, stackOffset, kind, type, value, param, instruction,loc));
         }
     }

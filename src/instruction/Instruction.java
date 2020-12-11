@@ -68,7 +68,8 @@ public class Instruction {
             case ret:
             case cmpi:
             case dup:
-
+            case setlt:
+            case setgt:
                 byte[] bytes=new byte[1];
                 bytes[0]=this.opt.toByte();
                 return bytes;
@@ -90,6 +91,39 @@ public class Instruction {
                 return byteBuffer.array();
             default:
                 return new byte[]{(byte)0xfe};
+        }
+    }
+
+    @Override
+    public String toString() {
+
+        switch (this.opt) {
+            case nop:
+            case pop:
+            case stroe64:
+            case load64:
+            case addi:
+            case subi:
+            case muli:
+            case divi:
+            case ret:
+            case cmpi:
+            case dup:
+            case setlt:
+            case setgt:
+                return String.format("%s",this.opt);
+            case push:
+
+            case globa:
+            case loca:
+            case br:
+            case arga:
+            case call:
+            case brtrue:
+            case brfalse:
+                return String.format("%s %s",this.opt,this.x);
+            default:
+                return "";
         }
     }
 }

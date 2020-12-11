@@ -46,6 +46,7 @@ public class Generator {
         output.writeInt(count);
         LinkedHashMap<String, SymbolEntry> table=analyser._startTable.getSymbolTable();
         for(Map.Entry<String, SymbolEntry> entry : table.entrySet()) {
+            System.out.println("fn "+entry.getValue().getName());
             output.writeInt(entry.getValue().getStackOffset());
             if(entry.getValue().getType() == IdentType.VOID){
                 output.writeInt(0);
@@ -57,7 +58,7 @@ public class Generator {
                 output.writeInt(0);
             }
             else{
-                //TODO
+                output.writeInt(entry.getValue().getParam().getCount());
             }
             if(entry.getValue().getLoc()==null){
                 output.writeInt(0);
@@ -74,6 +75,7 @@ public class Generator {
     private void generateInstruction(ArrayList<Instruction> instructions) throws IOException {
         for(Instruction instruction:instructions){
             output.write(instruction.toByte());
+            System.out.println(instruction.toString());
         }
     }
 };

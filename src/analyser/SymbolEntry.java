@@ -14,10 +14,10 @@ public class SymbolEntry {
     ArrayList<Instruction> instruction;
     String name;
     SymbolTable loc;
-    public SymbolEntry(){
+    public SymbolEntry(int stackOffset){
         this.name =null;
         this.isInitialized = false;
-        this.stackOffset = -1;
+        this.stackOffset = stackOffset;
         this.kind = null;
         this.type = null;
         this.value = null;
@@ -134,5 +134,9 @@ public class SymbolEntry {
 
     public void setLoc(SymbolTable loc) {
         this.loc = loc;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 }

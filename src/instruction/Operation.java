@@ -2,10 +2,14 @@ package instruction;
 
 public enum Operation {
     nop,pop,stroe64,load64,addi, subi,muli,divi,ret,cmpi,dup,
-    push,globa,loca, arga,br,brfalse,brtrue, call;
+    push,globa,loca, arga,br,brfalse,brtrue, call,	setlt,setgt;
 
     public byte toByte(){
         switch (this) {
+            case setgt:
+                return (byte)0x3a;
+            case setlt:
+                return (byte)0x39;
             case nop:
                 return (byte)0x00;
             case pop:

@@ -11,9 +11,12 @@ public final class Analyser {
     Tokenizer tokenizer;
     ArrayList<Instruction> instructions;
     public SymbolTable _startTable=new SymbolTable();
+    public SymbolEntry _start=null;
+    public SymbolEntry main=null;
     public SymbolTable globalTable=new SymbolTable();
     private SymbolTable fnTable=_startTable;
     private SymbolTable varTable=globalTable;
+    private SymbolTable paraTable =null;
 
     /** 当前偷看的 token */
     Token peekedToken = null;
@@ -21,8 +24,9 @@ public final class Analyser {
     public Analyser(Tokenizer tokenizer) throws AnalyzeError {
         this.tokenizer = tokenizer;
         this.instructions=new ArrayList<>();
-        fnTable.addSymbol(null,false,fnTable.getNextVariableOffset(),SymbolKind.FN,
-                IdentType.VOID,null,null,this.instructions,null,null);
+        this._start=new SymbolEntry(null,false,fnTable.getNextVariableOffset(),SymbolKind.FN,
+                IdentType.VOID,null,null,this.instructions,null);
+        fnTable.addSymbol(_start,null);
     }
 
     public void analyse() throws CompileError {
@@ -186,12 +190,30 @@ public final class Analyser {
     }
 
     private void analyseFunction() throws CompileError {
+        SymbolEntry symbol=new SymbolEntry(fnTable.getNextVariableOffset());
+        ArrayList<Instruction> instructions=new ArrayList<Instruction>();
+        SymbolTable locTable=new SymbolTable();
+        symbol.setLoc(locTable);
+
+        symbol.setInstruction(instructions);
+        symbol.setKind(SymbolKind.FN);
+        symbol.setInitialized(true);
         IdentType type;
         expect(TokenType.FN_KW);
         var nameToken = expect(TokenType.IDENT);
+        if(((String)nameToken.getValue()).equals("main")){
+            this.main=symbol;
+            _start.getInstruction().add(new Instruction(Operation.call,symbol.getStackOffset()));
+        }
+        symbol.setName((String)nameToken.getValue());
         expect(TokenType.L_PAREN);
         if(check(TokenType.CONST_KW)||check(TokenType.IDENT)){
+            SymbolTable paratable=new SymbolTable();
+            symbol.setParam(paratable);
+            locTable.setLastTable(paratable);
+            this.paraTable=paratable;
             analyseParamList();
+            this.paraTable=null;
         }
         expect(TokenType.R_PAREN);
         expect(TokenType.ARROW);
@@ -204,21 +226,26 @@ public final class Analyser {
         else{
             throw new ExpectedTokenError(List.of(TokenType.INT,TokenType.VOID), next());
         }
-        System.out.println("addSymbol"+(String) nameToken.getValue()+nameToken.getStartPos());
-        //TODO addSymbol();
+        symbol.setType(type);
+        //System.out.println("addSymbol"+(String) nameToken.getValue()+nameToken.getStartPos());
+        fnTable.addSymbol(symbol,nameToken.getStartPos());
         analyseBlockStatement();
     }
 
     private void analyseParamList() throws CompileError{
-        boolean isConstant=false;
+        SymbolEntry symbol=new SymbolEntry(fnTable.getNextVariableOffset());
+        SymbolKind isConstant=SymbolKind.LET;
         if(nextIf(TokenType.CONST_KW)==null){
-            isConstant=true;
+            isConstant=SymbolKind.CONST;
         }
         var nameToken = expect(TokenType.IDENT);
         expect(TokenType.COLON);
         expect(TokenType.INT);
-        System.out.println("addSymbol"+(String) nameToken.getValue()+nameToken.getStartPos());
-        //TODO addsymbol()
+        symbol.setName((String) nameToken.getValue());
+        symbol.setInitialized(true);
+        symbol.setKind(isConstant);
+        symbol.setType(IdentType.INT);
+        this.paraTable.addSymbol(symbol,nameToken.getStartPos());
         if(nextIf(TokenType.COMMA)!=null){
             analyseParamList();
         }
@@ -285,8 +312,9 @@ public final class Analyser {
         analyseBlockStatement();
     }
     private void analyseIdentStatement() throws CompileError{
-        expect(TokenType.IDENT);
+        var nameToken=expect(TokenType.IDENT);
         if(check(TokenType.L_PAREN)){
+            SymbolEntry entry=fnTable.getsymbol(nameToken.getValue(),nameToken.getStartPos());
             expect(TokenType.L_PAREN);
             if (check(TokenType.MINUS) || check(TokenType.IDENT) || check(TokenType.R_PAREN)
                     || check(TokenType.UINT_LITERAL) || check(TokenType.STRING_LITERAL)) {
@@ -296,9 +324,29 @@ public final class Analyser {
                     analyseExpression();
                 }
             }
+            expect(TokenType.R_PAREN);
+            instructions.add(new Instruction(Operation.call,entry.getStackOffset()));
         }
         else if(check(TokenType.ASSIGN)){
+            SymbolEntry entry=varTable.getsymbol(nameToken.getValue(),nameToken.getStartPos());
+            if(entry==null){
+                entry=globalTable.getsymbol(nameToken.getValue(),nameToken.getStartPos());
+                if(entry==null){
+                    entry=paraTable.getsymbol(nameToken.getValue(),nameToken.getStartPos());
+                }
+            }
+            else{
+                instructions.add(new Instruction(Operation.globa,entry.stackOffset));
+            }
+
+            if(entry==null){
+                throw new AnalyzeError(ErrorCode.NotDeclared,nameToken.getStartPos());
+            }
             expect(TokenType.ASSIGN);
+            if(entry.isInitialized==false){
+                throw new AnalyzeError(ErrorCode.NotInitialized,nameToken.getStartPos());
+            }
+
             analyseExpression();
         }
         else{
@@ -310,21 +358,40 @@ public final class Analyser {
 
     private void analyseExpression() throws CompileError {
         analyseSubexpression();
-        while (check(TokenType.LT)||check(TokenType.LE)||check(TokenType.GT)||check(TokenType.GE)||check(TokenType.NEQ)){
+        while (check(TokenType.LT)||check(TokenType.LE)||check(TokenType.GT)||check(TokenType.GE)||check(TokenType.NEQ)||check(TokenType.EQ)){
             if(check(TokenType.LT)){
                 analyseSubexpression();
+                instructions.add(new Instruction(Operation.cmpi));
+                instructions.add(new Instruction(Operation.setlt));
+                instructions.add(new Instruction(Operation.brtrue));
             }
             else if(check(TokenType.LE)){
                 analyseSubexpression();
+                instructions.add(new Instruction(Operation.cmpi));
+                instructions.add(new Instruction(Operation.setgt));
+                instructions.add(new Instruction(Operation.brfalse));
             }
             else if(check(TokenType.GE)){
                 analyseSubexpression();
+                instructions.add(new Instruction(Operation.cmpi));
+                instructions.add(new Instruction(Operation.setlt));
+                instructions.add(new Instruction(Operation.brfalse));
             }
             else if(check(TokenType.GT)){
                 analyseSubexpression();
+                instructions.add(new Instruction(Operation.cmpi));
+                instructions.add(new Instruction(Operation.setgt));
+                instructions.add(new Instruction(Operation.brtrue));
             }
             else if(check(TokenType.NEQ)){
                 analyseSubexpression();
+                instructions.add(new Instruction(Operation.cmpi));
+                instructions.add(new Instruction(Operation.brtrue));
+            }
+            else if(check(TokenType.EQ)){
+                analyseSubexpression();
+                instructions.add(new Instruction(Operation.cmpi));
+                instructions.add(new Instruction(Operation.brfalse));
             }
         }
     }
@@ -371,6 +438,7 @@ public final class Analyser {
         if (check(TokenType.IDENT)) {
             var nameToken=expect(TokenType.IDENT);
             if(check(TokenType.L_PAREN)){
+                SymbolEntry entry=fnTable.getsymbol(nameToken.getValue(),nameToken.getStartPos());
                 expect(TokenType.L_PAREN);
                 if (check(TokenType.MINUS) || check(TokenType.IDENT) || check(TokenType.R_PAREN)
                         || check(TokenType.UINT_LITERAL) || check(TokenType.STRING_LITERAL)) {
@@ -380,6 +448,8 @@ public final class Analyser {
                         analyseExpression();
                     }
                 }
+                expect(TokenType.R_PAREN);
+                instructions.add(new Instruction(Operation.call,entry.getStackOffset()));
             }
             else{
                 SymbolEntry entry=varTable.getsymbol(nameToken.getValue(),nameToken.getStartPos());
@@ -395,11 +465,9 @@ public final class Analyser {
             instructions.add(new Instruction(Operation.push,(Integer) nameToken.getValue()));
             // 调用相应的处理函数
         } else if (check(TokenType.L_PAREN)) {
-            var nameToken=next();
+            expect(TokenType.L_PAREN);
             analyseExpression();
-            if(nextIf(TokenType.R_PAREN)==null){
-                //throw new
-            }
+            expect(TokenType.R_PAREN);
         } else {
             // 都不是，摸了
             throw new ExpectedTokenError(List.of(TokenType.IDENT, TokenType.UINT_LITERAL, TokenType.L_PAREN), next());
