@@ -253,7 +253,7 @@ public final class Analyser {
         //System.out.println("addSymbol"+(String) nameToken.getValue()+nameToken.getStartPos());
         fnTable.addSymbol(symbol,nameToken.getStartPos());
         analyseBlockStatement();
-        if(symbol.getInstruction().get(symbol.getInstruction().size()-1).getOpt()!=Operation.ret){
+        if(symbol.getType()==IdentType.VOID||symbol.getInstruction().get(symbol.getInstruction().size()-1).getOpt()!=Operation.ret){
             symbol.getInstruction().add(new Instruction(Operation.ret));
         }
     }

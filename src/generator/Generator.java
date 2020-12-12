@@ -51,7 +51,7 @@ public class Generator {
         output.writeInt(count);
         LinkedHashMap<String, SymbolEntry> table=analyser._startTable.getSymbolTable();
         for(Map.Entry<String, SymbolEntry> entry : table.entrySet()) {
-            System.out.println("fn "+entry.getValue().getName());
+            System.out.println("fn "+entry.getValue().getName()+" "+entry.getValue().getType());
             output.writeInt(entry.getValue().getStackOffset());
             if(entry.getValue().getType() == IdentType.VOID){
                 output.writeInt(0);
