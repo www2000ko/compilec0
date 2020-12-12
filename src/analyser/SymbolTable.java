@@ -87,21 +87,7 @@ public class SymbolTable {
 
     public SymbolEntry getsymbol(Object name,Pos curPos) throws AnalyzeError {
         var entry = this.symbolTable.get(name);
-        if (entry == null) {
-            if(this.lastTable!=null){
-                entry= this.lastTable.symbolTable.get(name);
-                if(entry==null){
-                    throw new AnalyzeError(ErrorCode.NotDeclared, curPos);
-                }
-                else{
-                    entry.setIsparam(true);
-                    return entry;
-                }
-            }
-            throw new AnalyzeError(ErrorCode.NotDeclared, curPos);
-        } else {
-            return entry;
-        }
+        return entry;
     }
 
     public int getCount(){

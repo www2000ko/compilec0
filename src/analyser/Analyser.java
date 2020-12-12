@@ -2,7 +2,6 @@ package analyser;
 import error.*;
 import instruction.*;
 import tokenizer.*;
-import util.Pos;
 
 import java.util.*;
 
@@ -280,7 +279,7 @@ public final class Analyser {
         expect(TokenType.L_BRACE);
         while(check(TokenType.IF_KW)||check(TokenType.WHILE_KW)||check(TokenType.RETURN_KW)
                 ||check(TokenType.SEMICOLON)||check(TokenType.MINUS)||check(TokenType.IDENT)
-                ||check(TokenType.R_PAREN)||check(TokenType.UINT_LITERAL)||check(TokenType.LET_KW)||check(TokenType.CONST_KW)) {
+                ||check(TokenType.L_PAREN)||check(TokenType.UINT_LITERAL)||check(TokenType.LET_KW)||check(TokenType.CONST_KW)) {
             analyseStatement();
         }
         expect(TokenType.R_BRACE);
@@ -311,7 +310,7 @@ public final class Analyser {
     }
     private void analyseReturnStatement() throws CompileError {
         expect(TokenType.RETURN_KW);
-        if(check(TokenType.MINUS)||check(TokenType.IDENT)||check(TokenType.R_PAREN)
+        if(check(TokenType.MINUS)||check(TokenType.IDENT)||check(TokenType.L_PAREN)
                 ||check(TokenType.UINT_LITERAL)||check(TokenType.STRING_LITERAL)) {
 
             if(cufn.getType()==IdentType.VOID){
@@ -327,7 +326,7 @@ public final class Analyser {
     }
     private void analyseIfStatement() throws CompileError {
         expect(TokenType.IF_KW);
-        analyseBooleanExpression();
+        analyseExpression();
         Instruction passblock1=new Instruction(Operation.br);
         cuinstructions.add(passblock1);
         int off1=cufn.getInstruction().size();
@@ -352,7 +351,7 @@ public final class Analyser {
         cuinstructions.add(new Instruction(Operation.br,0));
         int off1=cufn.getInstruction().size();
 
-        analyseBooleanExpression();
+        analyseExpression();
 
         Instruction passblock=new Instruction(Operation.br);
         cuinstructions.add(passblock);
@@ -367,45 +366,45 @@ public final class Analyser {
         back.setX(off1-off3);
         passblock.setX(off3-off2);
     }
-    private void analyseBooleanExpression() throws CompileError {
-        analyseExpression();
+    private void analyseExpression() throws CompileError {
+        analyseSubExpression();
         if(check(TokenType.LT)){
             expect(TokenType.LT);
-            analyseExpression();
+            analyseSubExpression();
             cuinstructions.add(new Instruction(Operation.cmpi));
             cuinstructions.add(new Instruction(Operation.setlt));
             cuinstructions.add(new Instruction(Operation.brtrue,1));
         }
         else if(check(TokenType.LE)){
             expect(TokenType.LE);
-            analyseExpression();
+            analyseSubExpression();
             cuinstructions.add(new Instruction(Operation.cmpi));
             cuinstructions.add(new Instruction(Operation.setgt));
             cuinstructions.add(new Instruction(Operation.brfalse,1));
         }
         else if(check(TokenType.GE)){
             expect(TokenType.GE);
-            analyseExpression();
+            analyseSubExpression();
             cuinstructions.add(new Instruction(Operation.cmpi));
             cuinstructions.add(new Instruction(Operation.setlt));
             cuinstructions.add(new Instruction(Operation.brfalse,1));
         }
         else if(check(TokenType.GT)){
             expect(TokenType.GT);
-            analyseExpression();
+            analyseSubExpression();
             cuinstructions.add(new Instruction(Operation.cmpi));
             cuinstructions.add(new Instruction(Operation.setgt));
             cuinstructions.add(new Instruction(Operation.brtrue,1));
         }
         else if(check(TokenType.NEQ)){
             expect(TokenType.NEQ);
-            analyseExpression();
+            analyseSubExpression();
             cuinstructions.add(new Instruction(Operation.cmpi));
             cuinstructions.add(new Instruction(Operation.brtrue,1));
         }
         else if(check(TokenType.EQ)){
             expect(TokenType.EQ);
-            analyseExpression();
+            analyseSubExpression();
             cuinstructions.add(new Instruction(Operation.cmpi));
             cuinstructions.add(new Instruction(Operation.brfalse,1));
         }
@@ -419,19 +418,7 @@ public final class Analyser {
                 analysefn(nameToken);
         }
         else if(check(TokenType.ASSIGN)){
-            SymbolEntry entry=varTable.getsymbol(nameToken.getValue(),nameToken.getStartPos());
-            if(entry==null){
-                entry=globalTable.getsymbol(nameToken.getValue(),nameToken.getStartPos());
-                if(entry==null){
-                    throw new AnalyzeError(ErrorCode.NotDeclared,nameToken.getStartPos());
-                }
-                else{
-                    cuinstructions.add(new Instruction(Operation.globa,entry.stackOffset));
-                }
-            }
-            else{
-                getvar(entry);
-            }
+            SymbolEntry entry=getvar(nameToken);
             expect(TokenType.ASSIGN);
             entry.setInitialized(true);
             analyseExpression();
@@ -443,7 +430,7 @@ public final class Analyser {
         expect(TokenType.SEMICOLON);
     }
 
-    private void analyseExpression() throws CompileError{
+    private void analyseSubExpression() throws CompileError{
         analyseTerm();
         while(check(TokenType.MINUS)||check(TokenType.PLUS)){
             if(nextIf(TokenType.MINUS)!=null){
@@ -491,22 +478,7 @@ public final class Analyser {
                 analysefn(nameToken);
             }
             else{
-                SymbolEntry entry=varTable.getsymbol(nameToken.getValue(),nameToken.getStartPos());
-                if(entry==null){
-                    entry=globalTable.getsymbol(nameToken.getValue(),nameToken.getStartPos());
-                    if(entry==null){
-                        throw new AnalyzeError(ErrorCode.NotDeclared,nameToken.getStartPos());
-                    }
-                    else{
-                        cuinstructions.add(new Instruction(Operation.globa,entry.stackOffset));
-                    }
-                }
-                else{
-                    getvar(entry);
-                }
-                if(entry.isInitialized==false){
-                    throw new AnalyzeError(ErrorCode.NotInitialized,nameToken.getStartPos());
-                }
+                SymbolEntry entry=getvar(nameToken);
                 cuinstructions.add(new Instruction(Operation.load64,entry.stackOffset));
             }
         } else if (check(TokenType.UINT_LITERAL)) {
@@ -539,7 +511,7 @@ public final class Analyser {
             SymbolEntry entry=globalTable.getsymbol(nameToken.getValue(),nameToken.getStartPos());
             cuinstructions.add(new Instruction(Operation.stackalloc,0));
             expect(TokenType.L_PAREN);
-            if (check(TokenType.MINUS) || check(TokenType.IDENT) || check(TokenType.R_PAREN)
+            if (check(TokenType.MINUS) || check(TokenType.IDENT) || check(TokenType.L_PAREN)
                     || check(TokenType.UINT_LITERAL) || check(TokenType.STRING_LITERAL)) {
                 analyseExpression();
             }
@@ -565,7 +537,7 @@ public final class Analyser {
             SymbolEntry entry=fnTable.getsymbol(nameToken.getValue(),nameToken.getStartPos());
             stackAlloc(entry);
             expect(TokenType.L_PAREN);
-            if (check(TokenType.MINUS) || check(TokenType.IDENT) || check(TokenType.R_PAREN)
+            if (check(TokenType.MINUS) || check(TokenType.IDENT) || check(TokenType.L_PAREN)
                     || check(TokenType.UINT_LITERAL) || check(TokenType.STRING_LITERAL)) {
                 analyseExpression();
                 for(int i=0;i<entry.getParam().getCount()-1;i++){
@@ -579,13 +551,27 @@ public final class Analyser {
         }
 
     }
-    private void getvar(SymbolEntry entry){
-        if(entry.isIsparam()){
-            cuinstructions.add(new Instruction(Operation.arga,entry.stackOffset+1));
+    private SymbolEntry getvar(Token nameToken) throws AnalyzeError {
+        SymbolEntry entry=varTable.getsymbol(nameToken.getValue(),nameToken.getStartPos());
+        if(entry==null){
+            entry=cufn.getParam().getsymbol(nameToken.getValue(),nameToken.getStartPos());
+            if(entry==null){
+                entry=globalTable.getsymbol(nameToken.getValue(),nameToken.getStartPos());
+                if(entry==null){
+                    throw new AnalyzeError(ErrorCode.NotDeclared,nameToken.getStartPos());
+                }
+                else{
+                    cuinstructions.add(new Instruction(Operation.globa,entry.stackOffset));
+                }
+            }
+            else{
+                cuinstructions.add(new Instruction(Operation.arga,entry.stackOffset+1));
+            }
         }
         else{
             cuinstructions.add(new Instruction(Operation.loca,entry.stackOffset));
         }
+        return entry;
     }
 
     private void stackAlloc(SymbolEntry symbol){
