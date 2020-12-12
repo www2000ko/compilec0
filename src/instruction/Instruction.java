@@ -70,6 +70,7 @@ public class Instruction {
             case dup:
             case setlt:
             case setgt:
+            case load8:
                 byte[] bytes=new byte[1];
                 bytes[0]=this.opt.toByte();
                 return bytes;
@@ -113,6 +114,7 @@ public class Instruction {
             case dup:
             case setlt:
             case setgt:
+            case load8:
                 return String.format("%s",this.opt);
             case push:
 

@@ -2,7 +2,7 @@ package instruction;
 
 public enum Operation {
     nop,pop,stroe64,load64,addi, subi,muli,divi,ret,cmpi,dup,
-    push,globa,loca, arga,br,brfalse,brtrue, call,	setlt,setgt,callname,stackalloc;
+    push,globa,loca, arga,br,brfalse,brtrue, call,	setlt,setgt,callname,stackalloc,load8;
 
     public byte toByte(){
         switch (this) {
@@ -52,6 +52,8 @@ public enum Operation {
                 return (byte)0x4a;
             case stackalloc:
                 return (byte)0x1a;
+            case load8:
+                return (byte)0x10;
             default:
                 return (byte)0xfe;//panic
         }

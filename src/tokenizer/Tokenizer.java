@@ -41,7 +41,7 @@ public class Tokenizer {
         } else if(peek=='\''){
             return lexCInt();
         } else if(peek=='\"'){
-            return null;
+            return lexString();
             //TODO
         }else{
             return lexOperatorOrUnknown();
@@ -70,17 +70,72 @@ public class Tokenizer {
     }
     private Token lexCInt() throws TokenizeError {
         char ch=it.nextChar();
+        char char_literal='\0';
         if(ch!='\''){
             throw new TokenizeError(ErrorCode.InvalidInput, it.previousPos());
         }
         Pos startPos = it.currentPos();
-        char char_literal=it.nextChar();
+        ch = it.nextChar();
+        if(ch=='\\'){
+            char_literal=getescape();
+        }
+        else {
+            char_literal=ch;
+        }
         ch = it.nextChar();
         if(ch!='\''){
             throw new TokenizeError(ErrorCode.InvalidInput, it.previousPos());
         }
         Pos endPos = it.currentPos();
-        return new Token(TokenType.UINT_LITERAL,(int)char_literal - (int)('0'), startPos, endPos);
+        return new Token(TokenType.UINT_LITERAL,(int)char_literal, startPos, endPos);
+    }
+    private Token lexString() throws TokenizeError {
+        String arr = "";
+        char ch=it.nextChar();
+        if(ch!='\"'){
+            throw new TokenizeError(ErrorCode.InvalidInput, it.previousPos());
+        }
+        Pos startPos = it.currentPos();
+        boolean flag;
+        do{
+            flag=true;
+            ch=it.nextChar();
+            if(ch=='\\'){
+                ch=getescape();
+                flag=false;
+                arr=arr+ch;
+            }
+            if(ch!='\t'&&ch!='\n'&&ch!='\r'&&ch!='\"'&&ch!='\''){
+                arr=arr+ch;
+            }
+        }while(!(ch=='\"'&&flag));
+        if(ch!='\"'){
+            throw new TokenizeError(ErrorCode.InvalidInput, it.previousPos());
+        }
+        Pos endPos = it.currentPos();
+        return new Token(TokenType.STRING_LITERAL,arr, startPos, endPos);
+    }
+    private char getescape() throws TokenizeError {
+        char ch;
+        ch=it.nextChar();
+        if(ch=='\''){
+            return '\'';
+        }
+        else if(ch=='\"'){
+            return'\"';
+        }
+        else if(ch=='t'){
+            return'\t';
+        }else if(ch=='n'){
+            return'\n';
+        }else if(ch=='r'){
+            return'\r';
+        }else if(ch=='\\'){
+            return '\\';
+        }
+        else{
+            throw new TokenizeError(ErrorCode.InvalidInput, it.previousPos());
+        }
     }
 //    FN_KW     ,//-> 'fn'
 //    LET_KW    ,//-> 'let'

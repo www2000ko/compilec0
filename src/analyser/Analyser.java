@@ -367,6 +367,7 @@ public final class Analyser {
         passblock.setX(off3-off2);
     }
     private void analyseBlooeanExpression() throws CompileError {
+        nextIf(TokenType.L_PAREN);
         analyseExpression();
         if(check(TokenType.LT)){
             expect(TokenType.LT);
@@ -411,6 +412,7 @@ public final class Analyser {
         else{
             cuinstructions.add(new Instruction(Operation.brtrue,1));
         }
+        nextIf(TokenType.R_PAREN);
     }
     private void analyseIdentStatement() throws CompileError{
         var nameToken=expect(TokenType.IDENT);
@@ -485,6 +487,12 @@ public final class Analyser {
             var nameToken=next();
             cuinstructions.add(new Instruction(Operation.push,(Integer) nameToken.getValue()));
             // 调用相应的处理函数
+        } else if(check(TokenType.STRING_LITERAL)){
+            var nameToken=next();
+            SymbolEntry symbol=new SymbolEntry((String)nameToken.getValue(),true,globalTable.getNextVariableOffset(),SymbolKind.CONST
+                    ,IdentType.STRING,(String)nameToken.getValue());
+            globalTable.addSymbol(symbol,nameToken.getStartPos());
+            cuinstructions.add(new Instruction(Operation.push,globalTable.getOffset((String)nameToken.getValue(),nameToken.getStartPos())));
         } else if (check(TokenType.L_PAREN)) {
             expect(TokenType.L_PAREN);
             analyseExpression();
@@ -546,10 +554,8 @@ public final class Analyser {
                 }
             }
             expect(TokenType.R_PAREN);
-
             cuinstructions.add(new Instruction(Operation.call,entry.getStackOffset()));
         }
-
     }
     private SymbolEntry getvar(Token nameToken) throws AnalyzeError {
         SymbolEntry entry=varTable.getsymbol(nameToken.getValue(),nameToken.getStartPos());
