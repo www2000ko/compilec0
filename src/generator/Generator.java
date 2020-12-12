@@ -58,10 +58,11 @@ public class Generator {
                 output.writeInt(0);
             }
             else if(entry.getValue().getType() ==IdentType.INT){
-                output.writeInt(8);
+                output.writeInt(1);
             }
             if(entry.getValue().getParam() == null){
                 output.writeInt(0);
+                System.out.print(" "+0);
             }
             else{
                 output.writeInt(entry.getValue().getParam().getCount());
@@ -69,6 +70,7 @@ public class Generator {
             }
             if(entry.getValue().getLoc()==null){
                 output.writeInt(0);
+                System.out.println(" "+0);
             }else{
                 SymbolTable loc=entry.getValue().getLoc();
                 output.writeInt(loc.getCount());
