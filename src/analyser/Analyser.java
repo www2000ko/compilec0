@@ -473,14 +473,16 @@ public final class Analyser {
     }
 
     private void analyseFactor() throws CompileError {
-        boolean negate;
-        if (nextIf(TokenType.MINUS) != null) {
-            negate = true;
-            // 计算结果需要被 0 减
-            cuinstructions.add(new Instruction(Operation.push, 0));
-        } else {
-            nextIf(TokenType.PLUS);
-            negate = false;
+        int negate = 0;
+        while (check(TokenType.MINUS) ||check(TokenType.PLUS)) {
+            if(nextIf(TokenType.MINUS)!=null){
+                negate = negate+1;
+                // 计算结果需要被 0 减
+                cuinstructions.add(new Instruction(Operation.push, 0));
+            }
+            else{
+                nextIf(TokenType.PLUS);
+            }
         }
 
         if (check(TokenType.IDENT)) {
@@ -525,8 +527,7 @@ public final class Analyser {
             expect(TokenType.INT);
             //TODO
         }
-
-        if (negate) {
+        for(int i=0;i<negate;i++){
             cuinstructions.add(new Instruction(Operation.subi));
         }
         //throw new Error("Not implemented");
