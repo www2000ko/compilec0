@@ -90,11 +90,11 @@ public class SymbolTable {
         if (entry == null) {
             if(this.lastTable!=null){
                 entry= this.lastTable.symbolTable.get(name);
-                entry.setIsparam(true);
                 if(entry==null){
                     throw new AnalyzeError(ErrorCode.NotDeclared, curPos);
                 }
                 else{
+                    entry.setIsparam(true);
                     return entry;
                 }
             }
