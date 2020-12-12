@@ -100,6 +100,9 @@ public class Tokenizer {
         do{
             flag=true;
             ch=it.nextChar();
+            if(ch==0){
+                throw new TokenizeError(ErrorCode.InvalidInput, it.previousPos());
+            }
             if(ch=='\\'){
                 ch=getescape();
                 flag=false;
