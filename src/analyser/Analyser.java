@@ -310,17 +310,12 @@ public final class Analyser {
     }
     private void analyseReturnStatement() throws CompileError {
         expect(TokenType.RETURN_KW);
-        if(check(TokenType.MINUS)||check(TokenType.IDENT)||check(TokenType.L_PAREN)
-                ||check(TokenType.UINT_LITERAL)||check(TokenType.STRING_LITERAL)) {
-
-            if(cufn.getType()==IdentType.VOID){
-                throw new Error("gugu");
-            }
+        if(cufn.getType()==IdentType.INT){
+            expectAll(TokenType.MINUS,TokenType.IDENT,TokenType.L_PAREN,TokenType.UINT_LITERAL,TokenType.STRING_LITERAL);
             cuinstructions.add(new Instruction(Operation.arga,0));
             analyseExpression();
             cuinstructions.add(new Instruction(Operation.stroe64));
         }
-
         cuinstructions.add(new Instruction(Operation.ret));
         expect(TokenType.SEMICOLON);
     }
@@ -421,6 +416,9 @@ public final class Analyser {
         }
         else if(check(TokenType.ASSIGN)){
             SymbolEntry entry=getvar(nameToken);
+            if(entry.isConstant()){
+                throw new Error();
+            }
             expect(TokenType.ASSIGN);
             entry.setInitialized(true);
             analyseExpression();
