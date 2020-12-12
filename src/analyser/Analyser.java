@@ -326,7 +326,7 @@ public final class Analyser {
     }
     private void analyseIfStatement() throws CompileError {
         expect(TokenType.IF_KW);
-        analyseExpression();
+        analyseBlooeanExpression();
         Instruction passblock1=new Instruction(Operation.br);
         cuinstructions.add(passblock1);
         int off1=cufn.getInstruction().size();
@@ -351,7 +351,7 @@ public final class Analyser {
         cuinstructions.add(new Instruction(Operation.br,0));
         int off1=cufn.getInstruction().size();
 
-        analyseExpression();
+        analyseBlooeanExpression();
 
         Instruction passblock=new Instruction(Operation.br);
         cuinstructions.add(passblock);
@@ -366,45 +366,45 @@ public final class Analyser {
         back.setX(off1-off3);
         passblock.setX(off3-off2);
     }
-    private void analyseExpression() throws CompileError {
-        analyseSubExpression();
+    private void analyseBlooeanExpression() throws CompileError {
+        analyseExpression();
         if(check(TokenType.LT)){
             expect(TokenType.LT);
-            analyseSubExpression();
+            analyseExpression();
             cuinstructions.add(new Instruction(Operation.cmpi));
             cuinstructions.add(new Instruction(Operation.setlt));
             cuinstructions.add(new Instruction(Operation.brtrue,1));
         }
         else if(check(TokenType.LE)){
             expect(TokenType.LE);
-            analyseSubExpression();
+            analyseExpression();
             cuinstructions.add(new Instruction(Operation.cmpi));
             cuinstructions.add(new Instruction(Operation.setgt));
             cuinstructions.add(new Instruction(Operation.brfalse,1));
         }
         else if(check(TokenType.GE)){
             expect(TokenType.GE);
-            analyseSubExpression();
+            analyseExpression();
             cuinstructions.add(new Instruction(Operation.cmpi));
             cuinstructions.add(new Instruction(Operation.setlt));
             cuinstructions.add(new Instruction(Operation.brfalse,1));
         }
         else if(check(TokenType.GT)){
             expect(TokenType.GT);
-            analyseSubExpression();
+            analyseExpression();
             cuinstructions.add(new Instruction(Operation.cmpi));
             cuinstructions.add(new Instruction(Operation.setgt));
             cuinstructions.add(new Instruction(Operation.brtrue,1));
         }
         else if(check(TokenType.NEQ)){
             expect(TokenType.NEQ);
-            analyseSubExpression();
+            analyseExpression();
             cuinstructions.add(new Instruction(Operation.cmpi));
             cuinstructions.add(new Instruction(Operation.brtrue,1));
         }
         else if(check(TokenType.EQ)){
             expect(TokenType.EQ);
-            analyseSubExpression();
+            analyseExpression();
             cuinstructions.add(new Instruction(Operation.cmpi));
             cuinstructions.add(new Instruction(Operation.brfalse,1));
         }
@@ -430,7 +430,7 @@ public final class Analyser {
         expect(TokenType.SEMICOLON);
     }
 
-    private void analyseSubExpression() throws CompileError{
+    private void analyseExpression() throws CompileError{
         analyseTerm();
         while(check(TokenType.MINUS)||check(TokenType.PLUS)){
             if(nextIf(TokenType.MINUS)!=null){
