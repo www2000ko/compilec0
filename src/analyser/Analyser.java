@@ -311,7 +311,6 @@ public final class Analyser {
     private void analyseReturnStatement() throws CompileError {
         expect(TokenType.RETURN_KW);
         if(cufn.getType()==IdentType.INT){
-            expectAll(TokenType.MINUS,TokenType.IDENT,TokenType.L_PAREN,TokenType.UINT_LITERAL,TokenType.STRING_LITERAL);
             cuinstructions.add(new Instruction(Operation.arga,0));
             analyseExpression();
             cuinstructions.add(new Instruction(Operation.stroe64));
