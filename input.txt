@@ -1,4 +1,4 @@
 let d: int = 1+2;
-fn main(a: int, b: int)-> int {
-
+fn main()-> int {
+    return 1;
 }
