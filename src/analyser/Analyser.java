@@ -18,7 +18,9 @@ public final class Analyser {
     private SymbolTable fnTable=_startTable;
     private SymbolTable varTable=globalTable;
     private SymbolTable paraTable =null;
-
+    int stack=0;
+    int stackTop=0;
+    List <String> libs=Arrays.asList("getint","getdouble","getchar","putint","putdouble","putchar","putstr","putln");
     /** 当前偷看的 token */
     Token peekedToken = null;
 
@@ -26,8 +28,11 @@ public final class Analyser {
         this.tokenizer = tokenizer;
         this.cuinstructions=new ArrayList<>();
         this._start=new SymbolEntry(null,false,fnTable.getNextVariableOffset(),SymbolKind.FN,
-                IdentType.VOID,null,null,this.cuinstructions,null);
+                IdentType.VOID,null,null,0,this.cuinstructions,null);
         fnTable.addSymbol(_start,null);
+        for(String lib:libs){
+            globalTable.addSymbol(new SymbolEntry(lib,true,globalTable.getNextVariableOffset(),SymbolKind.CONST,IdentType.STRING,lib),null);
+        }
     }
 
     public void analyse() throws CompileError {
@@ -199,6 +204,7 @@ public final class Analyser {
 
 
         SymbolTable locTable=new SymbolTable();
+        varTable=locTable;
         symbol.setLoc(locTable);
 
 
@@ -209,19 +215,15 @@ public final class Analyser {
         IdentType type;
         expect(TokenType.FN_KW);
         var nameToken = expect(TokenType.IDENT);
-        if(((String)nameToken.getValue()).equals("main")){
-            this.main=symbol;
-            _start.getInstruction().add(new Instruction(Operation.call,symbol.getStackOffset()));
-        }
+
         symbol.setName((String)nameToken.getValue());
+
+        SymbolTable paratable=new SymbolTable();
+        symbol.setParam(paratable);
+        locTable.setLastTable(paratable);
 
         expect(TokenType.L_PAREN);
         if(check(TokenType.CONST_KW)||check(TokenType.IDENT)){
-
-            SymbolTable paratable=new SymbolTable();
-            symbol.setParam(paratable);
-
-            locTable.setLastTable(paratable);
             this.paraTable=paratable;
             analyseParamList();
             this.paraTable=null;
@@ -230,7 +232,6 @@ public final class Analyser {
         expect(TokenType.ARROW);
         if(nextIf(TokenType.INT)!=null){
             type=IdentType.INT;
-
         }
         else if(nextIf(TokenType.VOID)!=null){
             type=IdentType.VOID;
@@ -239,15 +240,25 @@ public final class Analyser {
             throw new ExpectedTokenError(List.of(TokenType.INT,TokenType.VOID), next());
         }
         symbol.setType(type);
+        if(((String)nameToken.getValue()).equals("main")){
+            this.main=symbol;
+            if(symbol.getType()==IdentType.VOID){
+                _start.getInstruction().add(new Instruction(Operation.stackalloc,0));
+            }
+            else if(symbol.getType()==IdentType.INT){
+                _start.getInstruction().add(new Instruction(Operation.stackalloc,1));
+            }
+            _start.getInstruction().add(new Instruction(Operation.call,symbol.getStackOffset()));
+        }
         //System.out.println("addSymbol"+(String) nameToken.getValue()+nameToken.getStartPos());
         fnTable.addSymbol(symbol,nameToken.getStartPos());
         analyseBlockStatement();
     }
 
     private void analyseParamList() throws CompileError{
-        SymbolEntry symbol=new SymbolEntry(fnTable.getNextVariableOffset());
+        SymbolEntry symbol=new SymbolEntry(cufn.getParam().getNextVariableOffset());
         SymbolKind isConstant=SymbolKind.LET;
-        if(nextIf(TokenType.CONST_KW)==null){
+        if(nextIf(TokenType.CONST_KW)!=null){
             isConstant=SymbolKind.CONST;
         }
         var nameToken = expect(TokenType.IDENT);
@@ -261,7 +272,6 @@ public final class Analyser {
         if(nextIf(TokenType.COMMA)!=null){
             analyseParamList();
         }
-
     }
     private void analyseBlockStatement() throws CompileError{
         expect(TokenType.L_BRACE);
@@ -295,12 +305,12 @@ public final class Analyser {
                 throw new ExpectedTokenError(List.of(TokenType.IF_KW,TokenType.WHILE_KW,TokenType.RETURN_KW,
                         TokenType.SEMICOLON,TokenType.IDENT, TokenType.LET_KW,TokenType.CONST_KW) ,next());
             }
-
     }
     private void analyseReturnStatement() throws CompileError {
         expect(TokenType.RETURN_KW);
         if(check(TokenType.MINUS)||check(TokenType.IDENT)||check(TokenType.R_PAREN)
                 ||check(TokenType.UINT_LITERAL)||check(TokenType.STRING_LITERAL)) {
+
             if(cufn.getType()==IdentType.VOID){
                 throw new Error("gugu");
             }
@@ -320,7 +330,7 @@ public final class Analyser {
         int off1=cufn.getInstruction().size();
         analyseBlockStatement();
         Instruction passblock2=new Instruction(Operation.br,0);
-        cuinstructions.add(passblock1);
+        cuinstructions.add(passblock2);
         int off2=cufn.getInstruction().size();
         passblock1.setX(off2-off1);
         if(check(TokenType.ELSE_KW)){
@@ -333,7 +343,6 @@ public final class Analyser {
                 analyseIfStatement();
             }
         }
-
     }
     private void analyseWhileStatement() throws CompileError {
         expect(TokenType.WHILE_KW);
@@ -404,7 +413,7 @@ public final class Analyser {
     private void analyseIdentStatement() throws CompileError{
         var nameToken=expect(TokenType.IDENT);
         if(check(TokenType.L_PAREN)){
-            analysefn(nameToken);
+                analysefn(nameToken);
         }
         else if(check(TokenType.ASSIGN)){
             SymbolEntry entry=varTable.getsymbol(nameToken.getValue(),nameToken.getStartPos());
@@ -418,10 +427,12 @@ public final class Analyser {
                 }
             }
             else{
-                cuinstructions.add(new Instruction(Operation.loca,entry.stackOffset));
+                getvar(entry);
             }
             expect(TokenType.ASSIGN);
+            entry.setInitialized(true);
             analyseExpression();
+            cuinstructions.add(new Instruction(Operation.stroe64));
         }
         else{
             throw new ExpectedTokenError(List.of(TokenType.IDENT,TokenType.ASSIGN) ,next());
@@ -486,7 +497,7 @@ public final class Analyser {
                     }
                 }
                 else{
-                    cuinstructions.add(new Instruction(Operation.loca,entry.stackOffset));
+                    getvar(entry);
                 }
                 if(entry.isInitialized==false){
                     throw new AnalyzeError(ErrorCode.NotInitialized,nameToken.getStartPos());
@@ -518,23 +529,69 @@ public final class Analyser {
         //throw new Error("Not implemented");
     }
     private void analysefn(Token nameToken) throws CompileError {
-        SymbolEntry entry=fnTable.getsymbol(nameToken.getValue(),nameToken.getStartPos());
-        expect(TokenType.L_PAREN);
-        if (check(TokenType.MINUS) || check(TokenType.IDENT) || check(TokenType.R_PAREN)
-                || check(TokenType.UINT_LITERAL) || check(TokenType.STRING_LITERAL)) {
-            analyseExpression();
-            for(int i=0;i<entry.getParam().getCount()-1;i++){
-                expect(TokenType.COMMA);
+        if(nameToken.getValue().equals("putint")||nameToken.getValue().equals("putdouble")
+                ||nameToken.getValue().equals("putchar")||nameToken.getValue().equals("putstr")){
+
+            SymbolEntry entry=globalTable.getsymbol(nameToken.getValue(),nameToken.getStartPos());
+            cuinstructions.add(new Instruction(Operation.stackalloc,0));
+            expect(TokenType.L_PAREN);
+            if (check(TokenType.MINUS) || check(TokenType.IDENT) || check(TokenType.R_PAREN)
+                    || check(TokenType.UINT_LITERAL) || check(TokenType.STRING_LITERAL)) {
                 analyseExpression();
             }
+            expect(TokenType.R_PAREN);
+
+            cuinstructions.add(new Instruction(Operation.callname,entry.getStackOffset()));
         }
-        expect(TokenType.R_PAREN);
-        cuinstructions.add(new Instruction(Operation.call,entry.getStackOffset()));
-    }
-    private void analyseVar(){
+        else if(nameToken.getValue().equals("getint")||nameToken.getValue().equals("getdouble")||nameToken.getValue().equals("getchar")){
+            SymbolEntry entry=globalTable.getsymbol(nameToken.getValue(),nameToken.getStartPos());
+            expect(TokenType.L_PAREN);
+            expect(TokenType.R_PAREN);
+            cuinstructions.add(new Instruction(Operation.stackalloc,1));
+            cuinstructions.add(new Instruction(Operation.callname,entry.getStackOffset()));
+        }
+        else if(nameToken.getValue().equals("putln")){
+            SymbolEntry entry=globalTable.getsymbol(nameToken.getValue(),nameToken.getStartPos());
+            expect(TokenType.L_PAREN);
+            expect(TokenType.R_PAREN);
+            cuinstructions.add(new Instruction(Operation.stackalloc,0));
+            cuinstructions.add(new Instruction(Operation.callname,entry.getStackOffset()));
+        }
+        else{
+            SymbolEntry entry=fnTable.getsymbol(nameToken.getValue(),nameToken.getStartPos());
+            stackAlloc(entry);
+            expect(TokenType.L_PAREN);
+            if (check(TokenType.MINUS) || check(TokenType.IDENT) || check(TokenType.R_PAREN)
+                    || check(TokenType.UINT_LITERAL) || check(TokenType.STRING_LITERAL)) {
+                analyseExpression();
+                for(int i=0;i<entry.getParam().getCount()-1;i++){
+                    expect(TokenType.COMMA);
+                    analyseExpression();
+                }
+            }
+            expect(TokenType.R_PAREN);
+
+            cuinstructions.add(new Instruction(Operation.call,entry.getStackOffset()));
+        }
 
     }
+    private void getvar(SymbolEntry entry){
+        if(entry.isIsparam()){
+            cuinstructions.add(new Instruction(Operation.arga,entry.stackOffset+1));
+        }
+        else{
+            cuinstructions.add(new Instruction(Operation.loca,entry.stackOffset));
+        }
+    }
 
+    private void stackAlloc(SymbolEntry symbol){
+        if(symbol.getType()==IdentType.VOID){
+            cuinstructions.add(new Instruction(Operation.stackalloc,0));
+        }
+        else if(symbol.getType()==IdentType.INT){
+            cuinstructions.add(new Instruction(Operation.stackalloc,1));
+        }
+    }
 //    private void analyseExpression() throws CompileError {
 //        if(check(TokenType.MINUS)){
 //            analyseNegateExpression();

@@ -36,7 +36,12 @@ public class Generator {
         for(Map.Entry<String, SymbolEntry> entry : table.entrySet()) {
             output.writeBoolean(entry.getValue().isConstant());
             output.writeInt(8);
-            output.writeLong((Long) entry.getValue().getValue());
+            if(entry.getValue().getType()==IdentType.INT){
+                output.writeLong((Long) entry.getValue().getValue());
+            }
+            else if(entry.getValue().getType()==IdentType.STRING){
+                output.writeChars((String)entry.getValue().getValue());
+            }
         }
 
     }
@@ -73,9 +78,10 @@ public class Generator {
     }
 
     private void generateInstruction(ArrayList<Instruction> instructions) throws IOException {
-        for(Instruction instruction:instructions){
-            output.write(instruction.toByte());
-            System.out.println(instruction.toString());
+        for(int i=0;i<instructions.size();i++){
+            output.write(instructions.get(i).toByte());
+            System.out.println(i+":"+instructions.get(i).toString());
         }
+        System.out.println("");
     }
 };

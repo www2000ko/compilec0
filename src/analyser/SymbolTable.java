@@ -24,29 +24,31 @@ public class SymbolTable {
         return this.nextOffset++;
     }
 
-    /**
-     * 添加一个符号
-     *
-     * @param name          名字
-     * @param curPos        当前 token 的位置（报错用）
-     * @throws AnalyzeError 如果重复定义了则抛异常
-     */
-    public void addSymbol(String name, boolean isDeclared, int stackOffset, SymbolKind kind, IdentType type, Object value, SymbolTable param, ArrayList<Instruction> instruction, SymbolTable loc,Pos curPos) throws AnalyzeError {
-        if (this.symbolTable.get(name) != null) {
-            throw new AnalyzeError(ErrorCode.DuplicateDeclaration, curPos);
-        } else {
-            if(this.lastTable!=null||this.lastTable.symbolTable.get(name) != null){
-                throw new AnalyzeError(ErrorCode.DuplicateDeclaration, curPos);
-            }
-            this.symbolTable.put(name, new SymbolEntry(name,isDeclared, stackOffset, kind, type, value, param, instruction,loc));
-        }
-    }
+
+//    public void addSymbol(String name, boolean isDeclared, int stackOffset, SymbolKind kind, IdentType type, Object value, SymbolTable param, int paramnum,ArrayList<Instruction> instruction, SymbolTable loc,Pos curPos) throws AnalyzeError {
+//        if (this.symbolTable.get(name) != null) {
+//            throw new AnalyzeError(ErrorCode.DuplicateDeclaration, curPos);
+//        } else {
+//            if(this.lastTable!=null&&this.lastTable.symbolTable.get(name) != null){
+//                throw new AnalyzeError(ErrorCode.DuplicateDeclaration, curPos);
+//            }
+//            else{
+//                this.symbolTable.put(name, new SymbolEntry(name,isDeclared, stackOffset, kind, type, value, param,paramnum, instruction,loc));
+//            }
+//
+//        }
+//    }
 
     public void addSymbol(SymbolEntry symbol, Pos curPos) throws AnalyzeError {
         if (this.symbolTable.get(symbol.getName()) != null) {
             throw new AnalyzeError(ErrorCode.DuplicateDeclaration, curPos);
         } else {
-            this.symbolTable.put(symbol.getName() , symbol);
+            if(this.lastTable!=null&&this.lastTable.symbolTable.get(symbol.getName()) != null) {
+                throw new AnalyzeError(ErrorCode.DuplicateDeclaration, curPos);
+            }
+            else{
+                this.symbolTable.put(symbol.getName(), symbol);
+            }
         }
     }
     /**
@@ -86,6 +88,16 @@ public class SymbolTable {
     public SymbolEntry getsymbol(Object name,Pos curPos) throws AnalyzeError {
         var entry = this.symbolTable.get(name);
         if (entry == null) {
+            if(this.lastTable!=null){
+                entry= this.lastTable.symbolTable.get(name);
+                entry.setIsparam(true);
+                if(entry==null){
+                    throw new AnalyzeError(ErrorCode.NotDeclared, curPos);
+                }
+                else{
+                    return entry;
+                }
+            }
             throw new AnalyzeError(ErrorCode.NotDeclared, curPos);
         } else {
             return entry;

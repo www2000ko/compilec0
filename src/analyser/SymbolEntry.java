@@ -11,9 +11,11 @@ public class SymbolEntry {
     IdentType type;
     Object value;
     SymbolTable param;
+    int paramnum;
     ArrayList<Instruction> instruction;
     String name;
     SymbolTable loc;
+    boolean isparam=false;
     public SymbolEntry(int stackOffset){
         this.name =null;
         this.isInitialized = false;
@@ -22,10 +24,11 @@ public class SymbolEntry {
         this.type = null;
         this.value = null;
         this.param = null;
+        this.paramnum=0;
         this.instruction = null;
         this.loc =null;
     }
-    public SymbolEntry(String name,boolean isDeclared, int stackOffset, SymbolKind kind, IdentType type, Object value, SymbolTable param, ArrayList<Instruction>  instruction,SymbolTable loc) {
+    public SymbolEntry(String name,boolean isDeclared, int stackOffset, SymbolKind kind, IdentType type, Object value, SymbolTable param, int paramnum,ArrayList<Instruction>  instruction,SymbolTable loc) {
         this.name =name;
         this.isInitialized = isDeclared;
         this.stackOffset = stackOffset;
@@ -33,6 +36,7 @@ public class SymbolEntry {
         this.type = type;
         this.value = value;
         this.param = param;
+        this.paramnum=paramnum;
         this.instruction = instruction;
         this.loc = loc;
     }
@@ -44,6 +48,7 @@ public class SymbolEntry {
         this.type = type;
         this.value = value;
         this.param = null;
+        this.paramnum=0;
         this.instruction = null;
         this.loc = null;
     }
@@ -138,5 +143,13 @@ public class SymbolEntry {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public boolean isIsparam() {
+        return isparam;
+    }
+
+    public void setIsparam(boolean isparam) {
+        this.isparam = isparam;
     }
 }

@@ -85,6 +85,8 @@ public class Instruction {
             case call:
             case brtrue:
             case brfalse:
+            case callname:
+            case stackalloc:
                 byteBuffer = ByteBuffer.allocate(5);
                 byteBuffer.put(this.opt.toByte());
                 byteBuffer.putInt((int)x);
@@ -121,6 +123,8 @@ public class Instruction {
             case call:
             case brtrue:
             case brfalse:
+            case callname:
+            case stackalloc:
                 return String.format("%s %s",this.opt,this.x);
             default:
                 return "";
