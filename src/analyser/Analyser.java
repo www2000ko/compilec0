@@ -335,7 +335,7 @@ public final class Analyser {
         passblock1.setX(off2-off1);
         if(check(TokenType.ELSE_KW)){
             expect(TokenType.ELSE_KW);
-            if (check(TokenType.R_BRACE)) {
+            if (check(TokenType.L_BRACE)) {
                 analyseBlockStatement();
                 int off3=cufn.getInstruction().size();
                 passblock2.setX(off3-off2);

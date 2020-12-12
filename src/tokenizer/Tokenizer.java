@@ -38,7 +38,12 @@ public class Tokenizer {
             return lexUInt();
         } else if (Character.isAlphabetic(peek)) {
             return lexIdentOrKeyword();
-        } else {
+        } else if(peek=='\''){
+            return lexCInt();
+        } else if(peek=='\"'){
+            return null;
+            //TODO
+        }else{
             return lexOperatorOrUnknown();
         }
     }
@@ -62,6 +67,20 @@ public class Tokenizer {
         //
         // Token 的 Value 应填写数字的值
         //throw new Error("Not implemented");
+    }
+    private Token lexCInt() throws TokenizeError {
+        char ch=it.nextChar();
+        if(ch!='\''){
+            throw new TokenizeError(ErrorCode.InvalidInput, it.previousPos());
+        }
+        Pos startPos = it.currentPos();
+        char char_literal=it.nextChar();
+        ch = it.nextChar();
+        if(ch!='\''){
+            throw new TokenizeError(ErrorCode.InvalidInput, it.previousPos());
+        }
+        Pos endPos = it.currentPos();
+        return new Token(TokenType.UINT_LITERAL,(int)char_literal - (int)('0'), startPos, endPos);
     }
 //    FN_KW     ,//-> 'fn'
 //    LET_KW    ,//-> 'let'
@@ -88,7 +107,7 @@ public class Tokenizer {
         String arr = "";
         arr+=it.nextChar();
         Pos startPos=it.currentPos();
-        while(Character.isDigit(it.peekChar())||Character.isAlphabetic(it.peekChar())){
+        while(Character.isDigit(it.peekChar())||Character.isAlphabetic(it.peekChar())||it.peekChar()=='_'){
             arr+=it.nextChar();
         }
         Pos endPos=it.currentPos();
@@ -98,16 +117,7 @@ public class Tokenizer {
             }
         }
         return new Token(TokenType.IDENT, arr, startPos, endPos);
-        // 请填空：
-        // 直到查看下一个字符不是数字或字母为止:
-        // -- 前进一个字符，并存储这个字符
-        //
-        // 尝试将存储的字符串解释为关键字
-        // -- 如果是关键字，则返回关键字类型的 token
-        // -- 否则，返回标识符
-        //
-        // Token 的 Value 应填写标识符或关键字的字符串
-        //throw new Error("Not implemented");
+
     }
 //    PLUS    ,// -> '+'
 //    MINUS   , //-> '-'
