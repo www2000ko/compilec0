@@ -105,7 +105,7 @@ public class Tokenizer {
                 flag=false;
                 arr=arr+ch;
             }
-            if(ch!='\t'&&ch!='\n'&&ch!='\r'&&ch!='\"'&&ch!='\''){
+            if(ch!='\t'&&ch!='\n'&&ch!='\r'&&ch!='\"'&&ch!='\''&&ch!='\\'){
                 arr=arr+ch;
             }
         }while(!(ch=='\"'&&flag));

@@ -231,6 +231,9 @@ public final class Analyser {
         expect(TokenType.ARROW);
         if(nextIf(TokenType.INT)!=null){
             type=IdentType.INT;
+            SymbolEntry returnsymbol=new SymbolEntry(null,true,cufn.getParam().getNextVariableOffset(),SymbolKind.LET
+                    ,IdentType.INT,0L);
+            cufn.getParam().addSymbol(returnsymbol,nameToken.getStartPos());
         }
         else if(nextIf(TokenType.VOID)!=null){
             type=IdentType.VOID;
@@ -339,11 +342,11 @@ public final class Analyser {
             expect(TokenType.ELSE_KW);
             if (check(TokenType.L_BRACE)) {
                 analyseBlockStatement();
-                int off3=cufn.getInstruction().size();
-                passblock2.setX(off3-off2);
             } else if (check(TokenType.IF_KW)) {
                 analyseIfStatement();
             }
+            int off3=cufn.getInstruction().size();
+            passblock2.setX(off3-off2);
         }
     }
     private void analyseWhileStatement() throws CompileError {
@@ -571,7 +574,7 @@ public final class Analyser {
                 }
             }
             else{
-                cuinstructions.add(new Instruction(Operation.arga,entry.stackOffset+1));
+                cuinstructions.add(new Instruction(Operation.arga,entry.stackOffset));
             }
         }
         else{
