@@ -35,12 +35,13 @@ public class Generator {
         LinkedHashMap<String, SymbolEntry> table=analyser.globalTable.getSymbolTable();
         for(Map.Entry<String, SymbolEntry> entry : table.entrySet()) {
             output.writeBoolean(entry.getValue().isConstant());
-            output.writeInt(8);
             if(entry.getValue().getType()==IdentType.INT){
+                output.writeInt(8);
                 output.writeLong((Long) entry.getValue().getValue());
             }
             else if(entry.getValue().getType()==IdentType.STRING){
-                output.writeChars((String)entry.getValue().getValue());
+                output.writeInt(((String)entry.getValue().getValue()).length());
+                output.write(((String) entry.getValue().getValue()).getBytes());
             }
         }
 
