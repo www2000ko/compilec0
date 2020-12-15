@@ -42,7 +42,6 @@ public class Tokenizer {
             return lexCInt();
         } else if(peek=='\"'){
             return lexString();
-            //TODO
         }else{
             return lexOperatorOrUnknown();
         }
@@ -216,7 +215,16 @@ public class Tokenizer {
             return new Token(TokenType.MUL, '*', it.previousPos(), it.currentPos());
         }
         else if(ch=='/'){
-            return new Token(TokenType.DIV, '/', it.previousPos(), it.currentPos());
+            if(it.peekChar()=='/'){
+                while(ch!='\n'){
+                    ch=it.nextChar();
+                }
+                return nextToken();
+            }
+            else{
+                return new Token(TokenType.DIV, '/', it.previousPos(), it.currentPos());
+            }
+
         }
         else if(ch=='='){
             if(it.peekChar()=='='){
