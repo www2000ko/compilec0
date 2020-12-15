@@ -2,7 +2,8 @@ package instruction;
 
 public enum Operation {
     nop,pop,stroe64,load64,addi, subi,muli,divi,ret,cmpi,dup,
-    push,globa,loca, arga,br,brfalse,brtrue, call,	setlt,setgt,callname,stackalloc,load8;
+    push,globa,loca, arga,br,brfalse,brtrue, call,	setlt,setgt,
+    callname,stackalloc,load8,divf,mulf,subf,addf,cmpf,itof,ftoi;
 
     public byte toByte(){
         switch (this) {
@@ -54,6 +55,20 @@ public enum Operation {
                 return (byte)0x1a;
             case load8:
                 return (byte)0x10;
+            case addf:
+                return (byte)0x24;
+            case subf:
+                return (byte)0x25;
+            case mulf:
+                return (byte)0x26;
+            case divf:
+                return (byte)0x27;
+            case cmpf:
+                return (byte)0x32;
+            case ftoi:
+                return (byte)0x37;
+            case itof:
+                return (byte)0x36;
             default:
                 return (byte)0xfe;//panic
         }

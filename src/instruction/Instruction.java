@@ -12,7 +12,7 @@ public class Instruction {
         this.x = 0;
     }
 
-    public Instruction(Operation opt, Integer x) {
+    public Instruction(Operation opt, Long x) {
         this.opt = opt;
         this.x = x;
     }
@@ -115,6 +115,13 @@ public class Instruction {
             case setlt:
             case setgt:
             case load8:
+            case itof:
+            case ftoi:
+            case cmpf:
+            case divf:
+            case mulf:
+            case subf:
+            case addf:
                 return String.format("%s",this.opt);
             case push:
 

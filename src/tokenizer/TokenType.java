@@ -16,9 +16,11 @@ public enum TokenType {
 
     UINT_LITERAL,
     STRING_LITERAL,
+    DOUBLE_LITERAL,
 
     IDENT,
 
+    DOUBLE,
     INT,
     VOID,
 
@@ -70,6 +72,8 @@ public enum TokenType {
                 return "UINT_LITERAL";
             case STRING_LITERAL:
                 return "STRING_LITERAL";
+            case DOUBLE_LITERAL:
+                return "DOUBLE_LITERAL";
             case IDENT:
                 return "IDENT";
             case PLUS:

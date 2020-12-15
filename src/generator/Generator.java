@@ -4,13 +4,11 @@ import analyser.Analyser;
 import analyser.IdentType;
 import analyser.SymbolEntry;
 import analyser.SymbolTable;
-import error.CompileError;
 import instruction.Instruction;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 

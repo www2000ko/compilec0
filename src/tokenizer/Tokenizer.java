@@ -35,7 +35,7 @@ public class Tokenizer {
 
         char peek = it.peekChar();
         if (Character.isDigit(peek)) {
-            return lexUInt();
+            return lexUIntorUdouble();
         } else if (Character.isAlphabetic(peek)) {
             return lexIdentOrKeyword();
         } else if(peek=='\''){
@@ -48,15 +48,29 @@ public class Tokenizer {
     }
 
 
-    private Token lexUInt() throws TokenizeError {
+    private Token lexUIntorUdouble() throws TokenizeError {
         String arr = "";
         arr+=it.nextChar();
         Pos startPos=it.currentPos();
-        while(Character.isDigit(it.peekChar())){
+        TokenType type=TokenType.UINT_LITERAL;
+        while(Character.isDigit(it.peekChar())||it.peekChar()=='.'){
+            if(it.peekChar()=='.'){
+                type=TokenType.DOUBLE_LITERAL;
+                it.nextChar();
+                continue;
+            }
             arr+=it.nextChar();
         }
         Pos endPos=it.currentPos();
-        return new Token(TokenType.UINT_LITERAL, Integer.valueOf(arr), startPos, endPos);
+        if(type==TokenType.UINT_LITERAL){
+            return new Token(TokenType.UINT_LITERAL, Integer.valueOf(arr), startPos, endPos);
+        }
+        else if(type==TokenType.DOUBLE_LITERAL){
+            return new Token(TokenType.DOUBLE_LITERAL, Double.valueOf(arr), startPos, endPos);
+        }
+        else{
+            throw new TokenizeError(ErrorCode.InvalidInput, it.previousPos());
+        }
         // 请填空：
         // 直到查看下一个字符不是数字为止:
         // -- 前进一个字符，并存储这个字符
@@ -160,6 +174,7 @@ public class Tokenizer {
         put("void",TokenType.VOID);
         put("break",TokenType.BREAK_KW);
         put("continue",TokenType.CONTINUE_KW);
+        put("double",TokenType.DOUBLE);
     }};
 
     private Token lexIdentOrKeyword() throws TokenizeError {

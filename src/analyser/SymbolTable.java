@@ -2,11 +2,8 @@ package analyser;
 
 import error.AnalyzeError;
 import error.ErrorCode;
-import instruction.Instruction;
 import util.Pos;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 
 public class SymbolTable {
@@ -94,7 +91,7 @@ public class SymbolTable {
         return symbolTable.size();
     }
 
-    public int getOffset(String name, Pos curPos) throws AnalyzeError {
+    public long getOffset(String name, Pos curPos) throws AnalyzeError {
         var entry = this.symbolTable.get(name);
         if (entry == null) {
             throw new AnalyzeError(ErrorCode.NotDeclared, curPos);

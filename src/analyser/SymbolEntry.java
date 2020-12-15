@@ -6,7 +6,7 @@ import java.util.ArrayList;
 
 public class SymbolEntry {
     boolean isInitialized;
-    int stackOffset;
+    long stackOffset;
     SymbolKind kind;
     IdentType type;
     Object value;
@@ -63,7 +63,7 @@ public class SymbolEntry {
     /**
      * @return the stackOffset
      */
-    public int getStackOffset() {
+    public long getStackOffset() {
         return stackOffset;
     }
 
@@ -85,7 +85,7 @@ public class SymbolEntry {
     /**
      * @param stackOffset the stackOffset to set
      */
-    public void setStackOffset(int stackOffset) {
+    public void setStackOffset(long stackOffset) {
         this.stackOffset = stackOffset;
     }
 
