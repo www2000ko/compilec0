@@ -158,6 +158,8 @@ public class Tokenizer {
         put("return", TokenType.RETURN_KW);
         put("int",TokenType.INT);
         put("void",TokenType.VOID);
+        put("break",TokenType.BREAK_KW);
+        put("continue",TokenType.CONTINUE_KW);
     }};
 
     private Token lexIdentOrKeyword() throws TokenizeError {

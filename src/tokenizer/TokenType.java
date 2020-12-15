@@ -11,6 +11,8 @@ public enum TokenType {
     IF_KW     ,//-> 'if'
     ELSE_KW   ,//-> 'else'
     RETURN_KW ,//-> 'return'
+    BREAK_KW,
+    CONTINUE_KW,
 
     UINT_LITERAL,
     STRING_LITERAL,
@@ -50,6 +52,8 @@ public enum TokenType {
                 return "NullToken";
             case FN_KW:
                 return "FN_KW";
+            case LET_KW:
+                return "LET_KW";
             case CONST_KW:
                 return "CONST_KW";
             case AS_KW:
@@ -112,6 +116,10 @@ public enum TokenType {
                 return "INT";
             case VOID:
                 return "VOID";
+            case BREAK_KW:
+                return "BREAK_KW";
+            case CONTINUE_KW:
+                return "CONTINUE_KW";
             default:
                 return "InvalidToken";
         }

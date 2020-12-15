@@ -239,7 +239,7 @@ public final class Analyser {
             throw new ExpectedTokenError(List.of(TokenType.INT,TokenType.VOID), next());
         }
         symbol.setType(type);
-        if(((String)nameToken.getValue()).equals("main")){
+        if((nameToken.getValue()).equals("main")){
             this.main=symbol;
             if(symbol.getType()==IdentType.VOID){
                 _start.getInstruction().add(new Instruction(Operation.stackalloc,0));
@@ -249,9 +249,8 @@ public final class Analyser {
             }
             _start.getInstruction().add(new Instruction(Operation.call,symbol.getStackOffset()));
         }
-        //System.out.println("addSymbol"+(String) nameToken.getValue()+nameToken.getStartPos());
         fnTable.addSymbol(symbol,nameToken.getStartPos());
-        analyseBlockStatement();
+        analyseBlockStatement(-1);
         if(symbol.getType()==IdentType.VOID||symbol.getInstruction().get(symbol.getInstruction().size()-1).getOpt()!=Operation.ret){
             symbol.getInstruction().add(new Instruction(Operation.ret));
         }
@@ -275,38 +274,75 @@ public final class Analyser {
             analyseParamList();
         }
     }
-    private void analyseBlockStatement() throws CompileError{
+    private Instruction[] analyseBlockStatement(int offbooleanexpression) throws CompileError{
+        ArrayList<Instruction> brList=new ArrayList<>();
+
         expect(TokenType.L_BRACE);
         while(check(TokenType.IF_KW)||check(TokenType.WHILE_KW)||check(TokenType.RETURN_KW)
                 ||check(TokenType.SEMICOLON)||check(TokenType.MINUS)||check(TokenType.IDENT)
-                ||check(TokenType.L_PAREN)||check(TokenType.UINT_LITERAL)||check(TokenType.LET_KW)||check(TokenType.CONST_KW)) {
-            analyseStatement();
+                ||check(TokenType.L_PAREN)||check(TokenType.UINT_LITERAL)||check(TokenType.LET_KW)||check(TokenType.CONST_KW)||check(TokenType.CONTINUE_KW)||check(TokenType.BREAK_KW)) {
+            Instruction[]br=analyseStatement(offbooleanexpression);
+            if(br!=null){
+                brList.addAll(Arrays.asList(br));
+            }
         }
         expect(TokenType.R_BRACE);
+        return brList.toArray(new Instruction[brList.size()]);
     }
-    private void analyseStatement() throws CompileError {
+    private Instruction[] analyseStatement(int offbooleanexpression) throws CompileError {
             if(check(TokenType.IF_KW)){
-                analyseIfStatement();
+                return analyseIfStatement(offbooleanexpression);
             }
             else if(check(TokenType.WHILE_KW)){
                 analyseWhileStatement();
+                return null;
             }
             else if(check(TokenType.RETURN_KW)){
                 analyseReturnStatement();
+                return null;
             }
             else if (check(TokenType.SEMICOLON)){
                 expect(TokenType.SEMICOLON);
+                return null;
             }
             else if(check(TokenType.IDENT)){
                 analyseIdentStatement();
+                return null;
             }
             else if(check(TokenType.LET_KW)||check(TokenType.CONST_KW)){
                 analyseDeclaration();
+                return null;
+            }
+            else if(check(TokenType.CONTINUE_KW)){
+                analyseContinueStatement(offbooleanexpression);
+                return null;
+            }
+            else if(check(TokenType.BREAK_KW)){
+                return new Instruction[]{analyseBreakStatement()};
             }
             else{
                 throw new ExpectedTokenError(List.of(TokenType.IF_KW,TokenType.WHILE_KW,TokenType.RETURN_KW,
-                        TokenType.SEMICOLON,TokenType.IDENT, TokenType.LET_KW,TokenType.CONST_KW) ,next());
+                        TokenType.SEMICOLON,TokenType.IDENT, TokenType.LET_KW,TokenType.CONST_KW,TokenType.CONTINUE_KW,TokenType.BREAK_KW),next());
             }
+    }
+    private Instruction analyseBreakStatement() throws CompileError {
+        expect(TokenType.BREAK_KW);
+        expect(TokenType.SEMICOLON);
+        Instruction br=new Instruction(Operation.br);
+        cuinstructions.add(br);
+        br.setX(cufn.getInstruction().size());
+        return br;
+    }
+    private void analyseContinueStatement(int offbooleanexpression) throws CompileError{
+        expect(TokenType.CONTINUE_KW);
+        expect(TokenType.SEMICOLON);
+        if(offbooleanexpression==-1){
+            throw new Error("wrong continue statement");
+        }
+
+        Instruction br=new Instruction(Operation.br);
+        cuinstructions.add(br);
+        br.setX(offbooleanexpression-cufn.getInstruction().size());
     }
     private void analyseReturnStatement() throws CompileError {
         expect(TokenType.RETURN_KW);
@@ -318,27 +354,46 @@ public final class Analyser {
         cuinstructions.add(new Instruction(Operation.ret));
         expect(TokenType.SEMICOLON);
     }
-    private void analyseIfStatement() throws CompileError {
+    private Instruction[] analyseIfStatement(int offbooleanexpression) throws CompileError {
+        List<Instruction> brList=new ArrayList<Instruction>();
+
         expect(TokenType.IF_KW);
+
         analyseBlooeanExpression();
+
         Instruction passblock1=new Instruction(Operation.br);
         cuinstructions.add(passblock1);
         int off1=cufn.getInstruction().size();
-        analyseBlockStatement();
+
+        Instruction ifbr[]=analyseBlockStatement(offbooleanexpression);
+        if(ifbr!=null){
+            brList.addAll(Arrays.asList(ifbr));
+        }
+
         Instruction passblock2=new Instruction(Operation.br,0);
         cuinstructions.add(passblock2);
         int off2=cufn.getInstruction().size();
+
         passblock1.setX(off2-off1);
+
         if(check(TokenType.ELSE_KW)){
             expect(TokenType.ELSE_KW);
             if (check(TokenType.L_BRACE)) {
-                analyseBlockStatement();
+                ifbr=analyseBlockStatement(offbooleanexpression);
+                if(ifbr!=null){
+                    brList.addAll(Arrays.asList(ifbr));
+                }
             } else if (check(TokenType.IF_KW)) {
-                analyseIfStatement();
+                ifbr=analyseIfStatement(offbooleanexpression);
+                if(ifbr!=null){
+                    brList.addAll(Arrays.asList(ifbr));
+                }
             }
+
             int off3=cufn.getInstruction().size();
             passblock2.setX(off3-off2);
         }
+        return brList.toArray(new Instruction[brList.size()]);
     }
     private void analyseWhileStatement() throws CompileError {
         expect(TokenType.WHILE_KW);
@@ -351,17 +406,23 @@ public final class Analyser {
         cuinstructions.add(passblock);
         int off2=cufn.getInstruction().size();
 
-        analyseBlockStatement();
+        Instruction breakbr[]=analyseBlockStatement(off1);
 
         Instruction back=new Instruction(Operation.br);
         cuinstructions.add(back);
         int off3=cufn.getInstruction().size();
 
+        if(breakbr!=null){
+            for (Instruction br:breakbr){
+                br.setX(off3-(int) br.getX());
+            }
+        }
+
         back.setX(off1-off3);
         passblock.setX(off3-off2);
     }
     private void analyseBlooeanExpression() throws CompileError {
-        nextIf(TokenType.L_PAREN);
+        while(nextIf(TokenType.L_PAREN)!=null);
         analyseExpression();
         if(check(TokenType.LT)){
             expect(TokenType.LT);
@@ -406,7 +467,7 @@ public final class Analyser {
         else{
             cuinstructions.add(new Instruction(Operation.brtrue,1));
         }
-        nextIf(TokenType.R_PAREN);
+        while(nextIf(TokenType.R_PAREN)!=null);
     }
     private void analyseIdentStatement() throws CompileError{
         var nameToken=expect(TokenType.IDENT);
