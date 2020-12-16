@@ -78,6 +78,8 @@ public class Instruction {
             case cmpf:
             case ftoi:
             case itof:
+            case negi:
+            case negf:
                 byte[] bytes=new byte[1];
                 bytes[0]=this.opt.toByte();
                 return bytes;
@@ -129,6 +131,8 @@ public class Instruction {
             case mulf:
             case subf:
             case addf:
+            case negi:
+            case negf:
                 return String.format("%s",this.opt);
             case push:
 

@@ -3,7 +3,8 @@ package instruction;
 public enum Operation {
     nop,pop,stroe64,load64,addi, subi,muli,divi,ret,cmpi,dup,
     push,globa,loca, arga,br,brfalse,brtrue, call,	setlt,setgt,
-    callname,stackalloc,load8,divf,mulf,subf,addf,cmpf,itof,ftoi;
+    callname,stackalloc,load8,divf,mulf,subf,addf,cmpf,itof,ftoi,
+    negi,negf;
 
     public byte toByte(){
         switch (this) {
@@ -69,6 +70,10 @@ public enum Operation {
                 return (byte)0x37;
             case itof:
                 return (byte)0x36;
+            case negf:
+                return (byte)0x35;
+            case negi:
+                return (byte)0x34;
             default:
                 return (byte)0xfe;//panic
         }

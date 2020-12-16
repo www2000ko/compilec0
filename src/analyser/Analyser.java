@@ -648,7 +648,6 @@ public final class Analyser {
             if(nextIf(TokenType.MINUS)!=null){
                 negate = negate+1;
                 // 计算结果需要被 0 减
-                cuinstructions.add(new Instruction(Operation.push, 0L));
             }
             else{
                 nextIf(TokenType.PLUS);
@@ -711,7 +710,12 @@ public final class Analyser {
             }
         }
         for(int i=0;i<negate;i++){
-            cuinstructions.add(new Instruction(Operation.subi));
+            if(type==IdentType.DOUBLE){
+                cuinstructions.add(new Instruction(Operation.negf));
+            }
+            else if(type==IdentType.INT){
+                cuinstructions.add(new Instruction(Operation.negi));
+            }
         }
         return type;
         //throw new Error("Not implemented");
