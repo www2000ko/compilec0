@@ -324,7 +324,7 @@ public final class Analyser {
                 if(map.containsKey("br")){
                     br= (Instruction[]) map.get("br");
                 }
-                if(map.containsKey("return")||(boolean) map.get("return")){
+                if(map.containsKey("return")&&(boolean) map.get("return")){
                     hasreturn=true;
                 }
                 if(br!=null){
