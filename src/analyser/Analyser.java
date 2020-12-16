@@ -329,6 +329,7 @@ public final class Analyser {
                 }
                 if(br!=null){
                     brList.addAll(Arrays.asList(br));
+                    br=null;
                 }
             }
         }
