@@ -178,7 +178,6 @@ public final class Analyser {
                 cuinstructions.add(new Instruction(Operation.stroe64));
             }
             expect(TokenType.SEMICOLON);
-            //System.out.println("addSymbol"+(String) nameToken.getValue()+nameToken.getStartPos());
 
             varTable.addSymbol(symbol,nameToken.getStartPos());
         }
@@ -445,7 +444,7 @@ public final class Analyser {
     }
     private IdentType analyseBlooeanExpression(boolean injudge) throws CompileError {
         IdentType type=analyseExpression();
-        IdentType subtype=null;
+        IdentType subtype;
         if(check(TokenType.LT)){
             expect(TokenType.LT);
             subtype=analyseExpression();

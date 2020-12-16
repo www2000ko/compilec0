@@ -85,6 +85,5 @@ public class Generator {
             output.write(instructions.get(i).toByte());
             System.out.println(i+":"+instructions.get(i).toString());
         }
-        System.out.println("");
     }
-};
+}

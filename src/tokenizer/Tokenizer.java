@@ -103,7 +103,7 @@ public class Tokenizer {
             throw new TokenizeError(ErrorCode.InvalidInput, it.previousPos());
         }
         Pos endPos = it.currentPos();
-        return new Token(TokenType.UINT_LITERAL,(int)char_literal, startPos, endPos);
+        return new Token(TokenType.UINT_LITERAL,(long)char_literal, startPos, endPos);
     }
     private Token lexString() throws TokenizeError {
         String arr = "";
