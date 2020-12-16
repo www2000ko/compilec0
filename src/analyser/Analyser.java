@@ -318,7 +318,7 @@ public final class Analyser {
         while(check(TokenType.IF_KW)||check(TokenType.WHILE_KW)||check(TokenType.RETURN_KW)
                 ||check(TokenType.SEMICOLON)||check(TokenType.MINUS)||check(TokenType.IDENT)
                 ||check(TokenType.LET_KW)||check(TokenType.CONST_KW)||check(TokenType.CONTINUE_KW)||check(TokenType.BREAK_KW)) {
-            Map<String, Object> map = new HashMap<>();
+            Map<String, Object> map;
             map=analyseStatement(offbooleanexpression);
             if(map!=null){
                 if(map.containsKey("br")){
