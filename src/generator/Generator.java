@@ -33,7 +33,7 @@ public class Generator {
         LinkedHashMap<String, SymbolEntry> table=analyser.globalTable.getSymbolTable();
         for(Map.Entry<String, SymbolEntry> entry : table.entrySet()) {
             output.writeBoolean(entry.getValue().isConstant());
-            if(entry.getValue().getType()==IdentType.INT){
+            if(entry.getValue().getType()==IdentType.INT||entry.getValue().getType()==IdentType.DOUBLE){
                 output.writeInt(8);
                 output.writeLong((Long) entry.getValue().getValue());
             }
