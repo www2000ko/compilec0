@@ -82,8 +82,11 @@ public class SymbolTable {
         }
     }
 
-    public SymbolEntry getsymbol(Object name,Pos curPos) throws AnalyzeError {
+    public SymbolEntry getsymbol(Object name) throws AnalyzeError {
         var entry = this.symbolTable.get(name);
+        if(entry==null &&this.lastTable!=null){
+            return this.lastTable.getsymbol(name);
+        }
         return entry;
     }
 

@@ -16,7 +16,6 @@ public final class Analyser {
     public SymbolTable globalTable=new SymbolTable();
     private SymbolTable fnTable=_startTable;
     private SymbolTable varTable=globalTable;
-    private SymbolTable paraTable =null;
 
     int stack=0;
     int stackTop=0;
@@ -219,15 +218,17 @@ public final class Analyser {
     private void analyseFunction() throws CompileError {
         SymbolEntry symbol=new SymbolEntry(fnTable.getNextVariableOffset());
         this.cufn=symbol;
+
         ArrayList<Instruction> instructions=new ArrayList<>();
         cuinstructions=instructions;
         symbol.setInstruction(instructions);
 
 
         SymbolTable locTable=new SymbolTable();
-        varTable=locTable;
         symbol.setLoc(locTable);
-
+        SymbolTable paratable=new SymbolTable();
+        symbol.setParam(paratable);
+        locTable.setLastTable(paratable);
 
         symbol.setKind(SymbolKind.FN);
 
@@ -239,15 +240,9 @@ public final class Analyser {
 
         symbol.setName((String)nameToken.getValue());
 
-        SymbolTable paratable=new SymbolTable();
-        symbol.setParam(paratable);
-        locTable.setLastTable(paratable);
-
         expect(TokenType.L_PAREN);
         if(check(TokenType.CONST_KW)||check(TokenType.IDENT)){
-            this.paraTable=paratable;
             analyseParamList();
-            this.paraTable=null;
         }
         expect(TokenType.R_PAREN);
         expect(TokenType.ARROW);
@@ -307,7 +302,7 @@ public final class Analyser {
         symbol.setInitialized(true);
         symbol.setKind(isConstant);
 
-        this.paraTable.addSymbol(symbol,nameToken.getStartPos());
+        this.cufn.getParam().addSymbol(symbol,nameToken.getStartPos());
         if(nextIf(TokenType.COMMA)!=null){
             analyseParamList();
         }
@@ -317,6 +312,10 @@ public final class Analyser {
         Map<String, Object> result = new HashMap<>();
         Instruction[] br=null;
         boolean hasreturn=false;
+
+        SymbolTable scope=new SymbolTable();
+        scope.setLastTable(this.cufn.getParam());
+
         expect(TokenType.L_BRACE);
         while(check(TokenType.IF_KW)||check(TokenType.WHILE_KW)||check(TokenType.RETURN_KW)
                 ||check(TokenType.SEMICOLON)||check(TokenType.MINUS)||check(TokenType.IDENT)
@@ -759,7 +758,7 @@ public final class Analyser {
         if(nameToken.getValue().equals("putint")||nameToken.getValue().equals("putdouble")
                 ||nameToken.getValue().equals("putchar")||nameToken.getValue().equals("putstr")){
 
-            SymbolEntry entry=globalTable.getsymbol(nameToken.getValue(),nameToken.getStartPos());
+            SymbolEntry entry=globalTable.getsymbol(nameToken.getValue());
             cuinstructions.add(new Instruction(Operation.stackalloc,0L));
             expect(TokenType.L_PAREN);
             if (check(TokenType.MINUS) || check(TokenType.IDENT) || check(TokenType.L_PAREN)
@@ -772,7 +771,7 @@ public final class Analyser {
             type=IdentType.VOID;
         }
         else if(nameToken.getValue().equals("getint")||nameToken.getValue().equals("getdouble")||nameToken.getValue().equals("getchar")){
-            SymbolEntry entry=globalTable.getsymbol(nameToken.getValue(),nameToken.getStartPos());
+            SymbolEntry entry=globalTable.getsymbol(nameToken.getValue());
             expect(TokenType.L_PAREN);
             expect(TokenType.R_PAREN);
             cuinstructions.add(new Instruction(Operation.stackalloc, 1L));
@@ -785,7 +784,7 @@ public final class Analyser {
             }
         }
         else if(nameToken.getValue().equals("putln")){
-            SymbolEntry entry=globalTable.getsymbol(nameToken.getValue(),nameToken.getStartPos());
+            SymbolEntry entry=globalTable.getsymbol(nameToken.getValue());
             expect(TokenType.L_PAREN);
             expect(TokenType.R_PAREN);
             cuinstructions.add(new Instruction(Operation.stackalloc, 0L));
@@ -793,7 +792,7 @@ public final class Analyser {
             type=IdentType.VOID;
         }
         else{
-            SymbolEntry entry=fnTable.getsymbol(nameToken.getValue(),nameToken.getStartPos());
+            SymbolEntry entry=fnTable.getsymbol(nameToken.getValue());
             stackAlloc(entry);
             expect(TokenType.L_PAREN);
             if (check(TokenType.MINUS) || check(TokenType.IDENT) || check(TokenType.L_PAREN)
@@ -811,11 +810,11 @@ public final class Analyser {
         return type;
     }
     private SymbolEntry getvar(Token nameToken) throws AnalyzeError {
-        SymbolEntry entry=varTable.getsymbol(nameToken.getValue(),nameToken.getStartPos());
+        SymbolEntry entry=varTable.getsymbol(nameToken.getValue());
         if(entry==null){
-            entry=cufn.getParam().getsymbol(nameToken.getValue(),nameToken.getStartPos());
+            entry=cufn.getParam().getsymbol(nameToken.getValue());
             if(entry==null){
-                entry=globalTable.getsymbol(nameToken.getValue(),nameToken.getStartPos());
+                entry=globalTable.getsymbol(nameToken.getValue());
                 if(entry==null){
                     throw new AnalyzeError(ErrorCode.NotDeclared,nameToken.getStartPos());
                 }
