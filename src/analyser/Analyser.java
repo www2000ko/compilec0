@@ -276,8 +276,8 @@ public final class Analyser {
         }
         fnTable.addSymbol(symbol,nameToken.getStartPos());
         Map<String, Object> map = analyseBlockStatement(-1);
-        if(map.containsKey("return")&&!(boolean)map.get("return")){
-           throw new Error("fn"+symbol.getName()+"ennd return");
+        if(map.containsKey("return")&&!(boolean)map.get("return")&&symbol.getType()!=IdentType.VOID){
+           throw new Error("fn "+symbol.getName()+" need return");
         }
         if(symbol.getType()==IdentType.VOID||symbol.getInstruction().get(symbol.getInstruction().size()-1).getOpt()!=Operation.ret){
             symbol.getInstruction().add(new Instruction(Operation.ret));
@@ -327,8 +327,8 @@ public final class Analyser {
                 if(map.containsKey("br")){
                     br= (Instruction[]) map.get("br");
                 }
-                if(map.containsKey("return")&&(boolean) map.get("return")){
-                    hasreturn=true;
+                if(map.containsKey("return")){
+                    hasreturn=(boolean) map.get("return");
                 }
                 if(br!=null){
                     brList.addAll(Arrays.asList(br));
