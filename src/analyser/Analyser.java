@@ -275,7 +275,10 @@ public final class Analyser {
             _start.getInstruction().add(new Instruction(Operation.call,symbol.getStackOffset()));
         }
         fnTable.addSymbol(symbol,nameToken.getStartPos());
-        analyseBlockStatement(-1);
+        Map<String, Object> map = analyseBlockStatement(-1);
+        if(map.containsKey("return")&&!(boolean)map.get("return")){
+           throw new Error("fn"+symbol.getName()+"ennd return");
+        }
         if(symbol.getType()==IdentType.VOID||symbol.getInstruction().get(symbol.getInstruction().size()-1).getOpt()!=Operation.ret){
             symbol.getInstruction().add(new Instruction(Operation.ret));
         }
