@@ -66,7 +66,7 @@ public class Generator {
                 output.writeInt(entry.getValue().getParam().getCount());
                 System.out.print(" "+entry.getValue().getParam().getCount());
             }
-            if(entry.getValue().getLoc()==null){
+            if(entry.getValue().getStackOffset()==0){
                 output.writeInt(0);
                 System.out.println(" "+0);
             }else{

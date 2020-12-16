@@ -16,6 +16,7 @@ public class SymbolEntry {
     String name;
     SymbolTable loc;
     boolean isparam=false;
+    SymbolTable scope;
     public SymbolEntry(int stackOffset){
         this.name =null;
         this.isInitialized = false;
@@ -27,6 +28,7 @@ public class SymbolEntry {
         this.paramnum=0;
         this.instruction = null;
         this.loc =null;
+        this.scope=null;
     }
     public SymbolEntry(String name,boolean isDeclared, int stackOffset, SymbolKind kind, IdentType type, Object value, SymbolTable param, int paramnum,ArrayList<Instruction>  instruction,SymbolTable loc) {
         this.name =name;
@@ -40,7 +42,7 @@ public class SymbolEntry {
         this.instruction = instruction;
         this.loc = loc;
     }
-    public SymbolEntry(String name,boolean isDeclared, int stackOffset, SymbolKind kind, IdentType type, Object value) {
+    public SymbolEntry(String name,boolean isDeclared, int stackOffset, SymbolKind kind, IdentType type, Object value,SymbolTable scope) {
         this.name =name;
         this.isInitialized = isDeclared;
         this.stackOffset = stackOffset;
@@ -51,6 +53,7 @@ public class SymbolEntry {
         this.paramnum=0;
         this.instruction = null;
         this.loc = null;
+        this.scope=scope;
     }
     public boolean isConstant(){
         if(this.kind ==SymbolKind.CONST){
@@ -151,5 +154,13 @@ public class SymbolEntry {
 
     public void setIsparam(boolean isparam) {
         this.isparam = isparam;
+    }
+
+    public SymbolTable getScope() {
+        return scope;
+    }
+
+    public void setScope(SymbolTable scope) {
+        this.scope = scope;
     }
 }

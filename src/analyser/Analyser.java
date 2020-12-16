@@ -27,10 +27,11 @@ public final class Analyser {
         this.tokenizer = tokenizer;
         this.cuinstructions=new ArrayList<>();
         this._start=new SymbolEntry(null,false,fnTable.getNextVariableOffset(),SymbolKind.FN,
-                IdentType.VOID,null,null,0,this.cuinstructions,null);
+                IdentType.VOID,null,null,0,this.cuinstructions,new SymbolTable());
+        this.cufn=_start;
         fnTable.addSymbol(_start,null);
         for(String lib:libs){
-            globalTable.addSymbol(new SymbolEntry(lib,true,globalTable.getNextVariableOffset(),SymbolKind.CONST,IdentType.STRING,lib),null);
+            globalTable.addSymbol(new SymbolEntry(lib,true,globalTable.getNextVariableOffset(),SymbolKind.CONST,IdentType.STRING,lib,null),null);
         }
     }
 
@@ -142,8 +143,8 @@ public final class Analyser {
         if(nextIf(TokenType.LET_KW)!=null){
             var nameToken = expect(TokenType.IDENT);
             IdentType type = null;
-            SymbolEntry symbol=new SymbolEntry((String)nameToken.getValue(),false,varTable.getNextVariableOffset(),SymbolKind.LET
-                    ,IdentType.INT,0L);
+            SymbolEntry symbol=new SymbolEntry((String)nameToken.getValue(),false,this.cufn.getLoc().getNextVariableOffset(),SymbolKind.LET
+                    ,IdentType.INT,0L,this.varTable);
             expect(TokenType.COLON);
             if(check(TokenType.DOUBLE)||check(TokenType.INT)){
                 if(nextIf(TokenType.DOUBLE)!=null){
@@ -179,6 +180,7 @@ public final class Analyser {
             expect(TokenType.SEMICOLON);
 
             varTable.addSymbol(symbol,nameToken.getStartPos());
+            this.cufn.getLoc().addSymbol(symbol,nameToken.getStartPos());
         }
     }
     private void analyseConstantDeclaration() throws CompileError {
@@ -195,10 +197,10 @@ public final class Analyser {
                 }
             }
             expect(TokenType.ASSIGN);
-            SymbolEntry symbol=new SymbolEntry((String)nameToken.getValue(),true,varTable.getNextVariableOffset(),SymbolKind.CONST
-                    ,type,0L);
+            SymbolEntry symbol=new SymbolEntry((String)nameToken.getValue(),true,this.cufn.getLoc().getNextVariableOffset(),SymbolKind.CONST
+                    ,type,0L,this.varTable);
             long off=symbol.getStackOffset();
-            if(varTable.isStart()){
+            if(varTable==this.globalTable){
                 cuinstructions.add(new Instruction(Operation.globa,off));
             }
             else{
@@ -210,8 +212,9 @@ public final class Analyser {
                 throw new Error("wrong type at"+next().getStartPos());
             }
             expect(TokenType.SEMICOLON);
-
+            symbol.setScope(this.varTable);
             varTable.addSymbol(symbol,nameToken.getStartPos());
+            this.cufn.getLoc().addSymbol(symbol,nameToken.getStartPos());
         }
     }
 
@@ -229,6 +232,8 @@ public final class Analyser {
         SymbolTable paratable=new SymbolTable();
         symbol.setParam(paratable);
         locTable.setLastTable(paratable);
+        paratable.setLastTable(this.globalTable);
+        this.varTable=paratable;
 
         symbol.setKind(SymbolKind.FN);
 
@@ -301,7 +306,7 @@ public final class Analyser {
         symbol.setName((String) nameToken.getValue());
         symbol.setInitialized(true);
         symbol.setKind(isConstant);
-
+        symbol.setScope(this.cufn.getParam());
         this.cufn.getParam().addSymbol(symbol,nameToken.getStartPos());
         if(nextIf(TokenType.COMMA)!=null){
             analyseParamList();
@@ -314,7 +319,8 @@ public final class Analyser {
         boolean hasreturn=false;
 
         SymbolTable scope=new SymbolTable();
-        scope.setLastTable(this.cufn.getParam());
+        scope.setLastTable(this.varTable);
+        this.varTable=scope;
 
         expect(TokenType.L_BRACE);
         while(check(TokenType.IF_KW)||check(TokenType.WHILE_KW)||check(TokenType.RETURN_KW)
@@ -711,7 +717,7 @@ public final class Analyser {
         }else if(check(TokenType.STRING_LITERAL)){
             var nameToken=next();
             SymbolEntry symbol=new SymbolEntry((String)nameToken.getValue(),true,globalTable.getNextVariableOffset(),SymbolKind.CONST
-                    ,IdentType.STRING,nameToken.getValue());
+                    ,IdentType.STRING,nameToken.getValue(),this.globalTable);
             globalTable.addSymbol(symbol,nameToken.getStartPos());
             cuinstructions.add(new Instruction(Operation.push,globalTable.getOffset((String)nameToken.getValue(),nameToken.getStartPos())));
             type=null;
@@ -812,17 +818,10 @@ public final class Analyser {
     private SymbolEntry getvar(Token nameToken) throws AnalyzeError {
         SymbolEntry entry=varTable.getsymbol(nameToken.getValue());
         if(entry==null){
-            entry=cufn.getParam().getsymbol(nameToken.getValue());
-            if(entry==null){
-                entry=globalTable.getsymbol(nameToken.getValue());
-                if(entry==null){
-                    throw new AnalyzeError(ErrorCode.NotDeclared,nameToken.getStartPos());
-                }
-                else{
-                    cuinstructions.add(new Instruction(Operation.globa,entry.stackOffset));
-                }
-            }
-            else{
+            throw new AnalyzeError(ErrorCode.NotDeclared,nameToken.getStartPos());
+        }
+        else{
+            if(entry.getScope()==cufn.getParam()){
                 if(cufn.getType()==IdentType.VOID){
                     cuinstructions.add(new Instruction(Operation.arga,entry.stackOffset));
                 }
@@ -830,9 +829,12 @@ public final class Analyser {
                     cuinstructions.add(new Instruction(Operation.arga,entry.stackOffset+1));
                 }
             }
-        }
-        else{
-            cuinstructions.add(new Instruction(Operation.loca,entry.stackOffset));
+            else if(entry.getScope()==this.globalTable){
+                cuinstructions.add(new Instruction(Operation.globa,entry.stackOffset));
+            }
+            else{
+                cuinstructions.add(new Instruction(Operation.loca,entry.stackOffset));
+            }
         }
         return entry;
     }
