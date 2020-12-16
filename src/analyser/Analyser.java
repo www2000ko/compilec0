@@ -205,6 +205,7 @@ public final class Analyser {
                 cuinstructions.add(new Instruction(Operation.loca ,off));
             }
             IdentType expressionType=analyseExpression();
+            cuinstructions.add(new Instruction(Operation.stroe64));
             if(expressionType!=type){
                 throw new Error("wrong type at"+next().getStartPos());
             }
