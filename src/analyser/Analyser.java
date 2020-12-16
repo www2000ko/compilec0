@@ -181,7 +181,7 @@ public final class Analyser {
 
             varTable.addSymbol(symbol,nameToken.getStartPos());
             if(this.cufn.getLoc()!=varTable){
-                this.cufn.getLoc().addSymbol(symbol,nameToken.getStartPos());
+                this.cufn.getLoc().getNextVariableOffset();
             }
 
         }
@@ -218,7 +218,7 @@ public final class Analyser {
             symbol.setScope(this.varTable);
             varTable.addSymbol(symbol,nameToken.getStartPos());
             if(this.cufn.getLoc()!=varTable) {
-                this.cufn.getLoc().addSymbol(symbol, nameToken.getStartPos());
+                this.cufn.getLoc().getNextVariableOffset();
             }
         }
     }
@@ -322,7 +322,7 @@ public final class Analyser {
         Map<String, Object> result = new HashMap<>();
         Instruction[] br=null;
         boolean hasreturn=false;
-
+        Map<String, Object> map;
         SymbolTable scope=new SymbolTable();
         scope.setLastTable(this.varTable);
         this.varTable=scope;
@@ -330,9 +330,14 @@ public final class Analyser {
         expect(TokenType.L_BRACE);
         while(check(TokenType.IF_KW)||check(TokenType.WHILE_KW)||check(TokenType.RETURN_KW)
                 ||check(TokenType.SEMICOLON)||check(TokenType.MINUS)||check(TokenType.IDENT)
-                ||check(TokenType.LET_KW)||check(TokenType.CONST_KW)||check(TokenType.CONTINUE_KW)||check(TokenType.BREAK_KW)) {
-            Map<String, Object> map;
-            map=analyseStatement(offbooleanexpression);
+                ||check(TokenType.LET_KW)||check(TokenType.CONST_KW)||check(TokenType.CONTINUE_KW)||check(TokenType.BREAK_KW)||check(TokenType.L_BRACE)) {
+            if(check(TokenType.L_BRACE)){
+                map=analyseBlockStatement(offbooleanexpression);
+            }
+            else{
+
+                map=analyseStatement(offbooleanexpression);
+            }
             if(map!=null){
                 if(map.containsKey("br")){
                     br= (Instruction[]) map.get("br");
@@ -345,10 +350,11 @@ public final class Analyser {
                     br=null;
                 }
             }
+
         }
         expect(TokenType.R_BRACE);
 
-        this.varTable=scope.getLastTable();
+        this.varTable=this.varTable.getLastTable();
 
         result.put("br",brList.toArray(new Instruction[0]));
         result.put("return",hasreturn);

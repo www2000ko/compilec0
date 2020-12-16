@@ -91,7 +91,7 @@ public class SymbolTable {
     }
 
     public int getCount(){
-        return symbolTable.size();
+        return this.nextOffset;
     }
 
     public long getOffset(String name, Pos curPos) throws AnalyzeError {
