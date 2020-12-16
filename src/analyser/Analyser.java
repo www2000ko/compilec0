@@ -195,13 +195,21 @@ public final class Analyser {
                 }
             }
             expect(TokenType.ASSIGN);
+            SymbolEntry symbol=new SymbolEntry((String)nameToken.getValue(),true,varTable.getNextVariableOffset(),SymbolKind.CONST
+                    ,type,0L);
+            long off=symbol.getStackOffset();
+            if(varTable.isStart()){
+                cuinstructions.add(new Instruction(Operation.globa,off));
+            }
+            else{
+                cuinstructions.add(new Instruction(Operation.loca ,off));
+            }
             IdentType expressionType=analyseExpression();
             if(expressionType!=type){
                 throw new Error("wrong type at"+next().getStartPos());
             }
             expect(TokenType.SEMICOLON);
-            SymbolEntry symbol=new SymbolEntry((String)nameToken.getValue(),true,varTable.getNextVariableOffset(),SymbolKind.CONST
-                    ,type,0L);
+
             varTable.addSymbol(symbol,nameToken.getStartPos());
         }
     }
