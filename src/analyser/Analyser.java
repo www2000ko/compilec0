@@ -31,7 +31,7 @@ public final class Analyser {
         this.cufn=_start;
         fnTable.addSymbol(_start,null);
         for(String lib:libs){
-            globalTable.addSymbol(new SymbolEntry(lib,true,globalTable.getNextVariableOffset(),SymbolKind.CONST,IdentType.STRING,lib,null),null);
+            globalTable.addSymbol(new SymbolEntry(lib,true,this.cufn.getLoc().getNextVariableOffset(),SymbolKind.CONST,IdentType.STRING,lib,null),null);
         }
     }
 
