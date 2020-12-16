@@ -17,6 +17,7 @@ public final class Analyser {
     private SymbolTable fnTable=_startTable;
     private SymbolTable varTable=globalTable;
     private SymbolTable paraTable =null;
+
     int stack=0;
     int stackTop=0;
     List <String> libs=Arrays.asList("getint","getdouble","getchar","putint","putdouble","putchar","putstr","putln");
@@ -308,32 +309,47 @@ public final class Analyser {
             analyseParamList();
         }
     }
-    private Instruction[] analyseBlockStatement(int offbooleanexpression) throws CompileError{
+    private Map<String, Object> analyseBlockStatement(int offbooleanexpression) throws CompileError{
         ArrayList<Instruction> brList=new ArrayList<>();
-
+        Map<String, Object> result = new HashMap<>();
+        Instruction[] br=null;
+        boolean hasreturn=false;
         expect(TokenType.L_BRACE);
         while(check(TokenType.IF_KW)||check(TokenType.WHILE_KW)||check(TokenType.RETURN_KW)
                 ||check(TokenType.SEMICOLON)||check(TokenType.MINUS)||check(TokenType.IDENT)
                 ||check(TokenType.LET_KW)||check(TokenType.CONST_KW)||check(TokenType.CONTINUE_KW)||check(TokenType.BREAK_KW)) {
-            Instruction[]br=analyseStatement(offbooleanexpression);
-            if(br!=null){
-                brList.addAll(Arrays.asList(br));
+            Map<String, Object> map = new HashMap<>();
+            map=analyseStatement(offbooleanexpression);
+            if(map!=null){
+                if(map.containsKey("br")){
+                    br= (Instruction[]) map.get("br");
+                }
+                if(map.containsKey("return")||(boolean) map.get("return")){
+                    hasreturn=true;
+                }
+                if(br!=null){
+                    brList.addAll(Arrays.asList(br));
+                }
             }
         }
         expect(TokenType.R_BRACE);
-        return brList.toArray(new Instruction[0]);
+        result.put("br",brList.toArray(new Instruction[0]));
+        result.put("return",hasreturn);
+        return result;
     }
-    private Instruction[] analyseStatement(int offbooleanexpression) throws CompileError {
+    private Map<String, Object> analyseStatement(int offbooleanexpression) throws CompileError {
+            Map<String, Object> result = new HashMap<>();
             if(check(TokenType.IF_KW)){
                 return analyseIfStatement(offbooleanexpression);
             }
             else if(check(TokenType.WHILE_KW)){
-                analyseWhileStatement();
-                return null;
+                result.put("return",analyseWhileStatement());
+                return result;
             }
             else if(check(TokenType.RETURN_KW)){
                 analyseReturnStatement();
-                return null;
+                result.put("return",true);
+                return result;
             }
             else if (check(TokenType.SEMICOLON)){
                 expect(TokenType.SEMICOLON);
@@ -352,7 +368,9 @@ public final class Analyser {
                 return null;
             }
             else if(check(TokenType.BREAK_KW)){
-                return new Instruction[]{analyseBreakStatement()};
+
+                result.put("br",new Instruction[]{analyseBreakStatement()});
+                return result;
             }
             else{
                 throw new ExpectedTokenError(List.of(TokenType.IF_KW,TokenType.WHILE_KW,TokenType.RETURN_KW,
@@ -392,8 +410,10 @@ public final class Analyser {
         cuinstructions.add(new Instruction(Operation.ret));
         expect(TokenType.SEMICOLON);
     }
-    private Instruction[] analyseIfStatement(int offbooleanexpression) throws CompileError {
-
+    private Map<String, Object> analyseIfStatement(int offbooleanexpression) throws CompileError {
+        Map<String, Object> result = new HashMap<>();
+        Map<String, Object> map;
+        boolean hasreturn;
         expect(TokenType.IF_KW);
 
         IdentType type=analyseBlooeanExpression();
@@ -403,8 +423,11 @@ public final class Analyser {
         Instruction passblock1=new Instruction(Operation.br);
         cuinstructions.add(passblock1);
         int off1=cufn.getInstruction().size();
+        map=analyseBlockStatement(offbooleanexpression);
 
-        Instruction[] ifbr =analyseBlockStatement(offbooleanexpression);
+        Instruction[] ifbr = (Instruction[]) map.get("br");
+        hasreturn= (boolean) map.get("return");
+
         List<Instruction> brList = new ArrayList<>(Arrays.asList(ifbr));
 
         Instruction passblock2=new Instruction(Operation.br, 0L);
@@ -416,19 +439,25 @@ public final class Analyser {
         if(check(TokenType.ELSE_KW)){
             expect(TokenType.ELSE_KW);
             if (check(TokenType.L_BRACE)) {
-                ifbr=analyseBlockStatement(offbooleanexpression);
+                map=analyseBlockStatement(offbooleanexpression);
+                ifbr= (Instruction[]) map.get("br");
                 brList.addAll(Arrays.asList(ifbr));
+                hasreturn=hasreturn&&(boolean)map.get("return");
             } else if (check(TokenType.IF_KW)) {
-                ifbr=analyseIfStatement(offbooleanexpression);
+                map=analyseIfStatement(offbooleanexpression);
+                ifbr=(Instruction[]) map.get("br");
+                hasreturn=hasreturn&&(boolean)map.get("return");
                 brList.addAll(Arrays.asList(ifbr));
             }
 
             int off3=cufn.getInstruction().size();
             passblock2.setX(off3-off2);
         }
-        return brList.toArray(new Instruction[0]);
+        result.put("br",brList.toArray(new Instruction[0]));
+        result.put("return",hasreturn);
+        return result;
     }
-    private void analyseWhileStatement() throws CompileError {
+    private boolean analyseWhileStatement() throws CompileError {
         expect(TokenType.WHILE_KW);
         cuinstructions.add(new Instruction(Operation.br, 0L));
         int off1=cufn.getInstruction().size();
@@ -440,8 +469,8 @@ public final class Analyser {
         Instruction passblock=new Instruction(Operation.br);
         cuinstructions.add(passblock);
         int off2=cufn.getInstruction().size();
-
-        Instruction[] breakbr =analyseBlockStatement(off1);
+        Map<String, Object> map=analyseBlockStatement(off1);
+        Instruction[] breakbr = (Instruction[]) map.get("br");
 
         Instruction back=new Instruction(Operation.br);
         cuinstructions.add(back);
@@ -453,6 +482,7 @@ public final class Analyser {
 
         back.setX(off1-off3);
         passblock.setX(off3-off2);
+        return (boolean) map.get("return");
     }
     private IdentType analyseBlooeanExpression() throws CompileError {
         IdentType type=analyseExpression();
