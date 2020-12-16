@@ -18,7 +18,6 @@ public final class Analyser {
     private SymbolTable varTable=globalTable;
     private SymbolTable paraTable =null;
     int stack=0;
-    boolean injudge=false;
     int stackTop=0;
     List <String> libs=Arrays.asList("getint","getdouble","getchar","putint","putdouble","putchar","putstr","putln");
     /** 当前偷看的 token */
@@ -388,8 +387,10 @@ public final class Analyser {
 
         expect(TokenType.IF_KW);
 
-        analyseBlooeanExpression(true);
-
+        IdentType type=analyseBlooeanExpression();
+        if(type!=IdentType.VOID){
+            cuinstructions.add(new Instruction(Operation.brtrue,1L));
+        }
         Instruction passblock1=new Instruction(Operation.br);
         cuinstructions.add(passblock1);
         int off1=cufn.getInstruction().size();
@@ -423,8 +424,10 @@ public final class Analyser {
         cuinstructions.add(new Instruction(Operation.br, 0L));
         int off1=cufn.getInstruction().size();
 
-        analyseBlooeanExpression(true);
-
+        IdentType type=analyseBlooeanExpression();
+        if(type!=IdentType.VOID){
+            cuinstructions.add(new Instruction(Operation.brtrue,1L));
+        }
         Instruction passblock=new Instruction(Operation.br);
         cuinstructions.add(passblock);
         int off2=cufn.getInstruction().size();
@@ -442,7 +445,7 @@ public final class Analyser {
         back.setX(off1-off3);
         passblock.setX(off3-off2);
     }
-    private IdentType analyseBlooeanExpression(boolean injudge) throws CompileError {
+    private IdentType analyseBlooeanExpression() throws CompileError {
         IdentType type=analyseExpression();
         IdentType subtype;
         if(check(TokenType.LT)){
@@ -459,6 +462,7 @@ public final class Analyser {
             if(subtype!=type){
                 throw new Error("wrong type at"+next().getStartPos());
             }
+            return IdentType.VOID;
         }
         else if(check(TokenType.LE)){
             expect(TokenType.LE);
@@ -474,6 +478,7 @@ public final class Analyser {
             if(subtype!=type){
                 throw new Error("wrong type at"+next().getStartPos());
             }
+            return IdentType.VOID;
         }
         else if(check(TokenType.GE)){
             expect(TokenType.GE);
@@ -489,6 +494,7 @@ public final class Analyser {
             if(subtype!=type){
                 throw new Error("wrong type at"+next().getStartPos());
             }
+            return IdentType.VOID;
         }
         else if(check(TokenType.GT)){
             expect(TokenType.GT);
@@ -504,6 +510,7 @@ public final class Analyser {
             if(subtype!=type){
                 throw new Error("wrong type at"+next().getStartPos());
             }
+            return IdentType.VOID;
         }
         else if(check(TokenType.NEQ)){
             expect(TokenType.NEQ);
@@ -518,6 +525,7 @@ public final class Analyser {
             if(subtype!=type){
                 throw new Error("wrong type at"+next().getStartPos());
             }
+            return IdentType.VOID;
         }
         else if(check(TokenType.EQ)){
             expect(TokenType.EQ);
@@ -532,11 +540,7 @@ public final class Analyser {
             if(subtype!=type){
                 throw new Error("wrong type at"+next().getStartPos());
             }
-        }
-        else{
-            if(injudge){
-                cuinstructions.add(new Instruction(Operation.brtrue, 1L));
-            }
+            return IdentType.VOID;
         }
         return type;
 
@@ -672,7 +676,7 @@ public final class Analyser {
             type=null;
         } else if (check(TokenType.L_PAREN)) {
             expect(TokenType.L_PAREN);
-            type=analyseBlooeanExpression(false);
+            type=analyseBlooeanExpression();
             expect(TokenType.R_PAREN);
         } else {
             // 都不是，摸了
