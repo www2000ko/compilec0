@@ -347,6 +347,9 @@ public final class Analyser {
             }
         }
         expect(TokenType.R_BRACE);
+
+        this.varTable=scope.getLastTable();
+
         result.put("br",brList.toArray(new Instruction[0]));
         result.put("return",hasreturn);
         return result;
