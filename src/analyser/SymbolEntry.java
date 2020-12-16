@@ -11,7 +11,6 @@ public class SymbolEntry {
     IdentType type;
     Object value;
     SymbolTable param;
-    boolean hasreturn=false;
     int paramnum;
     ArrayList<Instruction> instruction;
     String name;
