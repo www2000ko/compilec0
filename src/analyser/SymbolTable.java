@@ -37,15 +37,10 @@ public class SymbolTable {
 //    }
 
     public void addSymbol(SymbolEntry symbol, Pos curPos) throws AnalyzeError {
-        if (this.symbolTable.get(symbol.getName()) != null) {
+        if (this.getsymbolloc(symbol.getName()) != null) {
             throw new AnalyzeError(ErrorCode.DuplicateDeclaration, curPos);
         } else {
-            if(this.lastTable!=null&&this.lastTable.symbolTable.get(symbol.getName()) != null) {
-                throw new AnalyzeError(ErrorCode.DuplicateDeclaration, curPos);
-            }
-            else{
-                this.symbolTable.put(symbol.getName(), symbol);
-            }
+            this.symbolTable.put(symbol.getName(), symbol);
         }
     }
     /**
@@ -87,6 +82,11 @@ public class SymbolTable {
         if(entry==null &&this.lastTable!=null){
             return this.lastTable.getsymbol(name);
         }
+        return entry;
+    }
+
+    public SymbolEntry getsymbolloc(Object name) throws AnalyzeError {
+        var entry = this.symbolTable.get(name);
         return entry;
     }
 
