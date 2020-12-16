@@ -51,11 +51,11 @@ public class Generator {
         LinkedHashMap<String, SymbolEntry> table=analyser._startTable.getSymbolTable();
         for(Map.Entry<String, SymbolEntry> entry : table.entrySet()) {
             System.out.print("fn "+entry.getValue().getName()+" "+entry.getValue().getType());
-            output.writeInt(entry.getValue().getStackOffset());
+            output.writeInt((int) entry.getValue().getStackOffset());
             if(entry.getValue().getType() == IdentType.VOID){
                 output.writeInt(0);
             }
-            else if(entry.getValue().getType() ==IdentType.INT){
+            else if(entry.getValue().getType() ==IdentType.INT||entry.getValue().getType() ==IdentType.DOUBLE){
                 output.writeInt(1);
             }
             if(entry.getValue().getParam() == null){

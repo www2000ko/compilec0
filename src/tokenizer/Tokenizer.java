@@ -53,20 +53,23 @@ public class Tokenizer {
         arr+=it.nextChar();
         Pos startPos=it.currentPos();
         TokenType type=TokenType.UINT_LITERAL;
-        while(Character.isDigit(it.peekChar())||it.peekChar()=='.'){
+        while(Character.isDigit(it.peekChar())||it.peekChar()=='.'||it.peekChar()=='e'||it.peekChar()=='E'||it.peekChar()=='+'||it.peekChar()=='-'){
             if(it.peekChar()=='.'){
                 type=TokenType.DOUBLE_LITERAL;
-                it.nextChar();
-                continue;
+            }
+            else if(it.peekChar()=='e'||it.peekChar()=='E'||it.peekChar()=='-'||it.peekChar()=='+'){
+                if(type == TokenType.UINT_LITERAL){
+                    throw new TokenizeError(ErrorCode.InvalidInput, it.previousPos());
+                }
             }
             arr+=it.nextChar();
         }
         Pos endPos=it.currentPos();
         if(type==TokenType.UINT_LITERAL){
-            return new Token(TokenType.UINT_LITERAL, Integer.valueOf(arr), startPos, endPos);
+            return new Token(TokenType.UINT_LITERAL, Long.valueOf(arr), startPos, endPos);
         }
         else if(type==TokenType.DOUBLE_LITERAL){
-            return new Token(TokenType.DOUBLE_LITERAL, Double.valueOf(arr), startPos, endPos);
+            return new Token(TokenType.DOUBLE_LITERAL, Double.doubleToLongBits(Double.valueOf(arr)), startPos, endPos);
         }
         else{
             throw new TokenizeError(ErrorCode.InvalidInput, it.previousPos());

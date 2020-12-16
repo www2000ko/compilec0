@@ -71,6 +71,13 @@ public class Instruction {
             case setlt:
             case setgt:
             case load8:
+            case addf:
+            case subf:
+            case mulf:
+            case divf:
+            case cmpf:
+            case ftoi:
+            case itof:
                 byte[] bytes=new byte[1];
                 bytes[0]=this.opt.toByte();
                 return bytes;
